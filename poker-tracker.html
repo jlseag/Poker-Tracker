@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="theme-color" content="#f5f5f0"/>
+<title>Poker Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #f5f5f0; --bg2: #ffffff; --border: rgba(0,0,0,0.09);
+    --shadow: 0 1px 4px rgba(0,0,0,0.07); --text: #111111; --muted: #888888;
+    --green: #00995e; --red: #d63030; --acc-bg: #111111; --acc-txt: #ffffff;
+    --font-d: 'Syne', sans-serif; --font-m: 'DM Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--text); font-family: var(--font-d); min-height: 100vh; overflow-x: hidden; }
+
+  /* HEADER */
+  .header { padding: 52px 20px 10px; background: var(--bg); position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--border); }
+  .logo { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: #1a7a4a; }
+  .header-sub { font-family: var(--font-m); font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  /* NAV */
+  .nav { display: flex; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .nav-btn { flex: 1; padding: 13px 4px; font-family: var(--font-d); font-size: 12px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; border: none; background: none; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+  .nav-btn.active { color: var(--text); border-bottom-color: var(--text); }
+
+  .content { padding: 20px 16px 100px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* TIMELINE */
+  .timeline-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tl-pill { padding: 7px 14px; font-family: var(--font-m); font-size: 11px; border: 1px solid var(--border); background: var(--bg2); color: var(--muted); border-radius: 20px; cursor: pointer; white-space: nowrap; box-shadow: var(--shadow); }
+  .tl-pill.active { background: var(--acc-bg); color: var(--acc-txt); border-color: var(--acc-bg); }
+  .dropdown-wrap { position: relative; }
+  .dropdown-trigger { display: flex; align-items: center; gap: 5px; padding: 7px 14px; font-family: var(--font-m); font-size: 11px; border: 1px solid var(--border); background: var(--bg2); color: var(--muted); border-radius: 20px; cursor: pointer; white-space: nowrap; box-shadow: var(--shadow); user-select: none; }
+  .dropdown-trigger.active { background: var(--acc-bg); color: var(--acc-txt); border-color: var(--acc-bg); }
+  .dropdown-trigger .caret { font-size: 9px; transition: transform 0.2s; }
+  .dropdown-trigger.open .caret { transform: rotate(180deg); }
+  .dropdown-menu { display: none; position: absolute; top: calc(100% + 6px); left: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; min-width: 160px; z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.12); overflow: hidden; }
+  .dropdown-menu.show { display: block; }
+  .dd-year { padding: 10px 14px 4px; font-family: var(--font-m); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .dd-item { padding: 10px 16px; font-family: var(--font-m); font-size: 12px; color: var(--text); cursor: pointer; }
+  .dd-item:hover { background: var(--bg); }
+  .dd-item.active { color: var(--green); font-weight: 500; }
+  .dd-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* RANGE */
+  .range-picker { display: none; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 16px; box-shadow: var(--shadow); }
+  .range-picker.show { display: block; }
+  .range-row { display: flex; gap: 10px; align-items: center; }
+  .range-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-family: var(--font-m); font-size: 12px; outline: none; -webkit-appearance: none; }
+  .range-input:focus { border-color: var(--text); }
+  .range-sep { font-family: var(--font-m); font-size: 11px; color: var(--muted); }
+  .range-apply { margin-top: 10px; width: 100%; padding: 11px; background: var(--acc-bg); color: var(--acc-txt); border: none; border-radius: 8px; font-family: var(--font-d); font-size: 13px; font-weight: 700; cursor: pointer; }
+
+  /* METRICS */
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .metric { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 16px 14px; box-shadow: var(--shadow); }
+  .metric.full { grid-column: 1 / -1; }
+  .m-label { font-family: var(--font-m); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 8px; }
+  .m-val { font-family: var(--font-m); font-size: 15px; font-weight: 500; line-height: 1.3; color: var(--text); }
+  .m-val.big { font-size: 28px; }
+  .m-val.pos { color: var(--green); }
+  .m-val.neg { color: var(--red); }
+  .m-sub { font-family: var(--font-m); font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  /* STREAK */
+  .streak { display: inline-flex; align-items: center; gap: 8px; background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 8px 16px; font-family: var(--font-m); font-size: 12px; color: var(--text); margin-bottom: 20px; box-shadow: var(--shadow); }
+  .streak-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  /* CHART */
+  .chart-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .card-title { font-family: var(--font-m); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 14px; }
+  .chart-wrap { position: relative; height: 180px; }
+
+  /* HISTORY */
+  .section-lbl { font-family: var(--font-m); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; }
+  .hint-txt { font-family: var(--font-m); font-size: 10px; color: var(--muted); margin-bottom: 14px; }
+
+  /* SWIPE CONTAINER */
+  .swipe-container { position: relative; overflow: hidden; border-bottom: 1px solid var(--border); }
+  .swipe-container:last-child { border-bottom: none; }
+
+  /* RED TRASH REVEAL */
+  .delete-reveal {
+    position: absolute; right: 0; top: 0; bottom: 0; width: 72px;
+    background: var(--red);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .trash-icon { pointer-events: none; }
+
+  /* SESSION ROW */
+  .session {
+    display: flex; align-items: center; gap: 12px; padding: 13px 0;
+    background: var(--bg2); position: relative; z-index: 1;
+    transform: translateX(0); transition: transform 0.22s ease;
+    touch-action: pan-y; will-change: transform; cursor: pointer;
+    user-select: none;
+  }
+  .session.revealed { transform: translateX(-72px); }
+  .session.flying-out { transform: translateX(-110%); opacity: 0; transition: transform 0.22s ease, opacity 0.22s ease; }
+
+  .s-bar { width: 3px; height: 36px; border-radius: 2px; flex-shrink: 0; }
+  .s-bar.pos { background: var(--green); }
+  .s-bar.neg { background: var(--red); }
+  .s-info { flex: 1; min-width: 0; }
+  .s-date { font-family: var(--font-m); font-size: 11px; color: var(--muted); }
+  .s-note { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+
+  /* AMOUNT + INLINE TRASH */
+  .s-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .s-amt { font-family: var(--font-m); font-size: 14px; font-weight: 500; white-space: nowrap; }
+  .s-amt.pos { color: var(--green); }
+  .s-amt.neg { color: var(--red); }
+  .inline-trash { opacity: 0; pointer-events: none; transition: opacity 0.18s; display: flex; align-items: center; }
+  .session.selected .inline-trash { opacity: 1; pointer-events: auto; }
+
+  /* CONFIRM MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+    z-index: 999; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--bg2); border-radius: 16px; padding: 28px 24px 20px;
+    width: 100%; max-width: 320px; box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    text-align: center;
+  }
+  .modal-icon { font-size: 32px; margin-bottom: 12px; }
+  .modal-title { font-family: var(--font-d); font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .modal-sub { font-family: var(--font-m); font-size: 12px; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btn { flex: 1; padding: 13px; border: none; border-radius: 10px; font-family: var(--font-d); font-size: 14px; font-weight: 700; cursor: pointer; }
+  .modal-btn.cancel { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+  .modal-btn.confirm { background: var(--red); color: #fff; }
+
+  /* MONTHLY */
+  .month-block { margin-bottom: 28px; }
+  .month-hdr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+  .month-name { font-size: 15px; font-weight: 700; }
+  .month-total { font-family: var(--font-m); font-size: 12px; font-weight: 500; }
+  .month-meta { font-family: var(--font-m); font-size: 10px; color: var(--muted); margin-bottom: 10px; }
+  .month-chart { position: relative; height: 100px; }
+
+  /* ADD */
+  .form-section { margin-bottom: 20px; }
+  .f-label { font-family: var(--font-m); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); display: block; margin-bottom: 8px; }
+  .f-input { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; color: var(--text); font-family: var(--font-m); font-size: 15px; outline: none; -webkit-appearance: none; box-shadow: var(--shadow); }
+  .f-input:focus { border-color: var(--text); }
+  .f-input::placeholder { color: var(--muted); }
+  textarea.f-input { height: 80px; resize: none; }
+  .f-hint { font-family: var(--font-m); font-size: 10px; color: var(--muted); margin-top: 6px; }
+  .save-btn { width: 100%; padding: 16px; background: var(--acc-bg); color: var(--acc-txt); border: none; border-radius: 12px; font-family: var(--font-d); font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 8px; }
+  .save-btn:active { opacity: 0.8; }
+</style>
+</head>
+<body>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-icon">🗑️</div>
+    <div class="modal-title">Delete session?</div>
+    <div class="modal-sub" id="modal-sub">This cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeModal()">No, keep it</button>
+      <button class="modal-btn confirm" onclick="confirmDelete()">Yes, delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="header">
+  <div class="logo">POKER<span>LOG</span></div>
+  <div class="header-sub">All-time tracker · IDR</div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="switchPage('dashboard')">Dashboard</button>
+  <button class="nav-btn" onclick="switchPage('history')">History</button>
+  <button class="nav-btn" onclick="switchPage('monthly')">Monthly</button>
+  <button class="nav-btn" onclick="switchPage('add')">+ Add</button>
+</div>
+
+<div class="content">
+
+  <div id="page-dashboard" class="page active">
+    <div class="timeline-bar" id="timeline-bar"></div>
+    <div class="range-picker" id="range-picker">
+      <div class="range-row">
+        <input type="date" id="range-from" class="range-input"/>
+        <span class="range-sep">→</span>
+        <input type="date" id="range-to" class="range-input"/>
+      </div>
+      <button class="range-apply" onclick="applyRange()">Apply</button>
+    </div>
+    <div class="metrics" id="metrics"></div>
+    <div id="streak-el"></div>
+    <div class="chart-card">
+      <div class="card-title">Profit over time</div>
+      <div class="chart-wrap"><canvas id="profit-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div id="page-history" class="page">
+    <div class="section-lbl" id="hist-lbl"></div>
+    <div class="hint-txt">Swipe left or tap a session to reveal the delete option</div>
+    <div id="history-list"></div>
+  </div>
+
+  <div id="page-monthly" class="page">
+    <div id="monthly-list"></div>
+  </div>
+
+  <div id="page-add" class="page">
+    <div class="form-section">
+      <label class="f-label">Date</label>
+      <input type="date" id="inp-date" class="f-input"/>
+    </div>
+    <div class="form-section">
+      <label class="f-label">Result (thousands Rp)</label>
+      <input type="number" id="inp-amt" class="f-input" placeholder="500 or -300"/>
+      <div class="f-hint">Enter as in your log — 500 = Rp 500,000</div>
+    </div>
+    <div class="form-section">
+      <label class="f-label">Notes (optional)</label>
+      <textarea id="inp-note" class="f-input" placeholder="e.g. straight flush vs Anya"></textarea>
+    </div>
+    <button class="save-btn" onclick="addSession()">Save Session</button>
+    <div style="text-align:center;font-family:var(--font-m);font-size:11px;color:var(--muted);margin-top:16px;">Saved to your browser's local storage</div>
+  </div>
+
+</div>
+
+<script>
+const RAW = [
+  {d:'2025-05-01',v:500,n:''},{d:'2025-05-05',v:-700,n:''},{d:'2025-05-10',v:500,n:''},
+  {d:'2025-05-15',v:-800,n:''},{d:'2025-05-17',v:-250,n:''},{d:'2025-05-20',v:400,n:''},
+  {d:'2025-05-28',v:250,n:''},
+  {d:'2025-06-05',v:-400,n:''},{d:'2025-06-10',v:200,n:''},{d:'2025-06-15',v:-100,n:''},
+  {d:'2025-06-20',v:-300,n:''},{d:'2025-06-25',v:650,n:''},{d:'2025-06-28',v:-900,n:''},
+  {d:'2025-07-01',v:210,n:''},{d:'2025-07-05',v:320,n:''},{d:'2025-07-10',v:-50,n:''},
+  {d:'2025-07-15',v:470,n:''},{d:'2025-07-20',v:-70,n:''},{d:'2025-07-25',v:575,n:''},
+  {d:'2025-07-28',v:812,n:''},
+  {d:'2025-08-03',v:581,n:''},{d:'2025-08-05',v:-350,n:''},{d:'2025-08-09',v:630,n:''},
+  {d:'2025-08-15',v:335,n:''},{d:'2025-08-20',v:520,n:''},{d:'2025-08-25',v:300,n:''},
+  {d:'2025-08-28',v:312,n:''},
+  {d:'2025-11-01',v:525,n:''},{d:'2025-11-03',v:-170,n:''},{d:'2025-11-05',v:755,n:''},
+  {d:'2025-11-07',v:516,n:''},{d:'2025-11-12',v:550,n:''},{d:'2025-11-14',v:335,n:''},
+  {d:'2025-11-20',v:1200,n:''},{d:'2025-11-25',v:100,n:''},{d:'2025-11-28',v:250,n:''},
+  {d:'2025-12-01',v:-200,n:''},{d:'2025-12-02',v:-700,n:''},{d:'2025-12-05',v:1162,n:''},
+  {d:'2025-12-06',v:-450,n:''},{d:'2025-12-08',v:-1500,n:''},{d:'2025-12-10',v:310,n:''},
+  {d:'2025-12-15',v:-320,n:''},{d:'2025-12-20',v:400,n:''},{d:'2025-12-25',v:500,n:''},
+  {d:'2025-12-30',v:-450,n:''},
+  {d:'2026-01-02',v:150,n:''},{d:'2026-01-05',v:310,n:''},{d:'2026-01-07',v:300,n:''},
+  {d:'2026-01-10',v:250,n:'john freak'},{d:'2026-01-13',v:430,n:'brian chian'},
+  {d:'2026-01-14',v:746,n:''},{d:'2026-01-16',v:400,n:''},{d:'2026-01-18',v:300,n:''},
+  {d:'2026-01-20',v:-37,n:'dim phil alsut'},{d:'2026-01-31',v:-700,n:'played bad'},
+  {d:'2026-02-06',v:-300,n:'hagen bad beats'},{d:'2026-02-15',v:700,n:'online 50k tourney'},
+  {d:'2026-02-17',v:-800,n:'ko sam angpao'},{d:'2026-02-19',v:1200,n:'the Hagens 88'},
+  {d:'2026-02-22',v:656,n:'card fixed?'},{d:'2026-02-28',v:1200,n:'titis 10/2'},
+  {d:'2026-03-05',v:-83,n:'online w calv kenz'},{d:'2026-03-07',v:900,n:'straight flush v anya'},
+  {d:'2026-03-09',v:568,n:'NIT online gaming'},{d:'2026-03-12',v:-300,n:'ariel online win'},
+  {d:'2026-03-15',v:279,n:'hero ajez w 2 pair'},{d:'2026-03-15',v:-50,n:'tyson coolers 1v1'},
+  {d:'2026-03-16',v:748,n:'onl james tys rey'},{d:'2026-03-21',v:480,n:'onl 4 man'},
+  {d:'2026-03-24',v:100,n:'tys heads up'},{d:'2026-03-25',v:25,n:'ajez tys james'},
+  {d:'2026-03-26',v:100,n:'ajez heads up'},{d:'2026-03-29',v:372,n:'onl james tys rey'},
+  {d:'2026-03-30',v:75,n:'tys bad beat AA 2x'},{d:'2026-03-31',v:-1500,n:'onl AA vs AK james'},
+  {d:'2026-04-02',v:60,n:'tys patio nuts always'},{d:'2026-04-05',v:796,n:'called out james a5'},
+  {d:'2026-04-07',v:1175,n:'had to fold jj twice'},{d:'2026-04-09',v:443,n:'allin 2x pot bluff titi K2'},
+  {d:'2026-04-11',v:-138,n:'pure donation'},{d:'2026-04-12',v:280,n:'hero called titi king high'},
+  {d:'2026-04-13',v:-193,n:'did not win a single 50k tourney'},{d:'2026-04-17',v:45,n:''},
+  {d:'2026-04-18',v:-414,n:''},{d:'2026-04-19',v:151,n:'straight flush v anya aq diamond'},
+  {d:'2026-04-20',v:-150,n:''},{d:'2026-04-21',v:570,n:''},
+  {d:'2026-04-25',v:700,n:'offline Remys w ajez, 10/2 fullhouse vs 66'},
+  {d:'2026-04-26',v:406,n:"called remy's triple barrel bluff j9"},
+  {d:'2026-04-27',v:147,n:'Tim bluffed into my straight'},{d:'2026-04-29',v:-50,n:'1v1 ajez heads up'},
+  {d:'2026-05-01',v:1500,n:'offline remys w abe, folded nut straight against phil'},
+  {d:'2026-05-04',v:-227,n:'trolling online'},{d:'2026-05-05',v:220,n:'Ajez ran it once'},
+  {d:'2026-05-08',v:1560,n:'live reads at remy, hero call ajez ace high'},
+  {d:'2026-05-09',v:817,n:'titi punted 500k with 62 offsuit'},
+  {d:'2026-05-12',v:1560,n:'bluffed remy, he folded second nut flush k10'},
+  {d:'2026-05-14',v:718,n:'taking turns with echo, bluffed reyner with 57'},
+  {d:'2026-05-15',v:-600,n:'absolute bluff rampage in remys'},
+  {d:'2026-05-16',v:370,n:'played with cha, cho, ariel, jen, nadia'},
+  {d:'2026-05-18',v:437,n:'3 j 3 7 5, pocket 77 boat against remy'},
+  {d:'2026-05-19',v:277,n:'ak boat kk2a4 vs ajez j7 diamond flush'},
+  {d:'2026-05-22',v:600,n:'called kenzies 102 triple barrel with aces'},
+  {d:'2026-05-23',v:635,n:'online bluff on seon'},
+];
+
+const KEY = 'pokerlog_v1';
+function load() {
+  try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch(e) {}
+  return RAW.map((r,i)=>({id:i,date:r.d,amount:r.v,note:r.n}));
+}
+function save(ss) { try { localStorage.setItem(KEY, JSON.stringify(ss)); } catch(e) {} }
+let sessions = load();
+
+function idr(v, round) {
+  const real = (round ? Math.round(v) : v) * 1000;
+  const abs = Math.abs(real);
+  return (v < 0 ? '-' : '+') + 'Rp\u00a0' + abs.toLocaleString('id-ID');
+}
+function idrShort(v) {
+  const abs = Math.abs(v);
+  if (abs >= 1000) return (v<0?'-':'')+Math.round(abs/1000)+'jt';
+  return (v<0?'-':'')+abs+'rb';
+}
+function fmtDate(d) {
+  return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+}
+function monthKey(d) { return d.slice(0,7); }
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+let pendingDeleteId = null;
+let pendingDeleteEl = null;
+
+function openModal(id, sessionEl, note, dateStr) {
+  pendingDeleteId = id;
+  pendingDeleteEl = sessionEl;
+  const label = note && note !== '—' ? `"${note}"` : `session on ${dateStr}`;
+  document.getElementById('modal-sub').textContent = `Delete ${label}? This cannot be undone.`;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function closeModal() {
+  // snap row back if it was swiped open
+  if (pendingDeleteEl) {
+    pendingDeleteEl.classList.remove('revealed');
+  }
+  pendingDeleteId = null;
+  pendingDeleteEl = null;
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+function confirmDelete() {
+  if (pendingDeleteId === null) return;
+  const sessionEl = pendingDeleteEl;
+  document.getElementById('modal-overlay').classList.remove('show');
+  // animate row out
+  const wrap = sessionEl ? sessionEl.closest('.swipe-container') : null;
+  if (sessionEl) sessionEl.classList.add('flying-out');
+  setTimeout(() => {
+    sessions = sessions.filter(x => String(x.id) !== String(pendingDeleteId));
+    save(sessions);
+    pendingDeleteId = null;
+    pendingDeleteEl = null;
+    renderHistory();
+  }, 230);
+}
+// Close modal on overlay click
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ── TIMELINE ──────────────────────────────────────────────────────────────────
+let activeFilter = 'all', rangeFrom = '', rangeTo = '', ddOpen = false;
+
+function getYearsAndMonths() {
+  const map = {};
+  sessions.forEach(s => {
+    const yr = s.date.slice(0,4), mk = monthKey(s.date);
+    if (!map[yr]) map[yr] = new Set();
+    map[yr].add(mk);
+  });
+  const result = {};
+  Object.keys(map).sort().forEach(yr => { result[yr] = [...map[yr]].sort(); });
+  return result;
+}
+function monthLabel(mk) {
+  const [yr,mo] = mk.split('-');
+  return new Date(+yr,+mo-1,1).toLocaleDateString('en-GB',{month:'long'});
+}
+function buildTimeline() {
+  const bar = document.getElementById('timeline-bar');
+  const ymap = getYearsAndMonths();
+  const ddActive = activeFilter !== 'all' && activeFilter !== 'range';
+  const ddLabel = ddActive ? (() => {
+    const [yr,mo] = activeFilter.split('-');
+    return new Date(+yr,+mo-1,1).toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+  })() : 'Monthly';
+
+  let ddItems = '';
+  Object.keys(ymap).forEach((yr, yi) => {
+    if (yi > 0) ddItems += `<div class="dd-divider"></div>`;
+    ddItems += `<div class="dd-year">${yr}</div>`;
+    ymap[yr].forEach(mk => {
+      ddItems += `<div class="dd-item ${activeFilter===mk?'active':''}" onclick="setFilter('${mk}')">${monthLabel(mk)}</div>`;
+    });
+  });
+
+  bar.innerHTML = `
+    <button class="tl-pill ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">All time</button>
+    <div class="dropdown-wrap" id="dd-wrap">
+      <div class="dropdown-trigger ${ddActive?'active':''} ${ddOpen?'open':''}" onclick="toggleDropdown()">
+        ${ddLabel} <span class="caret">▾</span>
+      </div>
+      <div class="dropdown-menu ${ddOpen?'show':''}">${ddItems}</div>
+    </div>
+    <button class="tl-pill ${activeFilter==='range'?'active':''}" onclick="setFilter('range')">Custom range</button>
+  `;
+  document.getElementById('range-picker').classList.toggle('show', activeFilter === 'range');
+}
+function toggleDropdown() {
+  ddOpen = !ddOpen; buildTimeline();
+  if (ddOpen) setTimeout(() => document.addEventListener('click', closeDdOutside, {once:true}), 0);
+}
+function closeDdOutside(e) {
+  const w = document.getElementById('dd-wrap');
+  if (w && !w.contains(e.target)) { ddOpen = false; buildTimeline(); }
+}
+function setFilter(f) { activeFilter = f; ddOpen = false; buildTimeline(); if (f !== 'range') renderDashboard(); }
+function applyRange() {
+  rangeFrom = document.getElementById('range-from').value;
+  rangeTo = document.getElementById('range-to').value;
+  if (!rangeFrom || !rangeTo) { alert('Please select both dates.'); return; }
+  renderDashboard();
+}
+function filteredSessions() {
+  if (activeFilter === 'all') return sessions;
+  if (activeFilter === 'range') { if (!rangeFrom||!rangeTo) return sessions; return sessions.filter(s=>s.date>=rangeFrom&&s.date<=rangeTo); }
+  return sessions.filter(s=>monthKey(s.date)===activeFilter);
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+let profitChart = null;
+function renderDashboard() {
+  buildTimeline();
+  const ss = filteredSessions().sort((a,b)=>a.date.localeCompare(b.date));
+  const total = ss.reduce((s,x)=>s+x.amount,0);
+  const wins = ss.filter(x=>x.amount>0).length;
+  const losses = ss.filter(x=>x.amount<0).length;
+  const n = ss.length, wr = n?(wins/n*100).toFixed(2):'0.00', avg = n?total/n:0;
+
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric full"><div class="m-label">Total Profit</div><div class="m-val ${total>=0?'pos':'neg'}">${idr(total,false)}</div></div>
+    <div class="metric"><div class="m-label">Win Rate</div><div class="m-val big ${parseFloat(wr)>=50?'pos':''}">${wr}%</div></div>
+    <div class="metric"><div class="m-label">Sessions</div><div class="m-val big">${n}</div><div class="m-sub">${wins}W · ${losses}L</div></div>
+    <div class="metric full"><div class="m-label">Avg per Session</div><div class="m-val ${avg>=0?'pos':'neg'}">${idr(avg,true)}</div></div>
+  `;
+
+  const allSorted = [...sessions].sort((a,b)=>a.date.localeCompare(b.date));
+  let streak=0, st='';
+  for (let i=allSorted.length-1;i>=0;i--) {
+    const w=allSorted[i].amount>0;
+    if(!streak){streak=1;st=w?'win':'loss';}
+    else if((w&&st==='win')||(!w&&st==='loss'))streak++;
+    else break;
+  }
+  document.getElementById('streak-el').innerHTML = `<div class="streak"><div class="streak-dot" style="background:${st==='win'?'var(--green)':'var(--red)'}"></div><span>${streak} session ${st} streak</span></div>`;
+
+  const labels=[], data=[];
+  let run=0, lastMo='';
+  const singleMonth = activeFilter !== 'all' && activeFilter !== 'range';
+  ss.forEach(s => {
+    run += s.amount;
+    if (singleMonth) { labels.push(parseInt(s.date.slice(8,10)).toString()); }
+    else { const mo=s.date.slice(0,7); const lbl=new Date(mo+'-01T00:00:00').toLocaleDateString('en-GB',{month:'short',year:'2-digit'}); labels.push(mo!==lastMo?lbl:''); lastMo=mo; }
+    data.push(run);
+  });
+
+  const ctx = document.getElementById('profit-chart').getContext('2d');
+  if (profitChart) profitChart.destroy();
+  profitChart = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[{ data: singleMonth&&data.length?data.map(v=>v-(data[0]-ss[0].amount)):data, borderColor:'#00995e', backgroundColor:'rgba(0,153,94,0.07)', borderWidth:2, pointRadius:0, fill:true, tension:0.3 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>idr(c.raw,false), title:()=>'' }, backgroundColor:'#fff', bodyColor:'#111', borderColor:'rgba(0,0,0,0.1)', borderWidth:1 } },
+      scales:{
+        x:{ ticks:{ color:'#aaa', font:{size:9,family:'DM Mono'}, autoSkip:false, maxRotation:45, callback:function(v,i){ return this.getLabelForValue(i); } }, grid:{display:false} },
+        y:{ ticks:{ color:'#aaa', font:{size:9,family:'DM Mono'}, callback:v=>idrShort(v) }, grid:{color:'rgba(0,0,0,0.05)'} }
+      }
+    }
+  });
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────────
+function closeAllRows() {
+  document.querySelectorAll('.session.revealed').forEach(el => el.classList.remove('revealed'));
+  document.querySelectorAll('.session.selected').forEach(el => el.classList.remove('selected'));
+}
+
+function renderHistory() {
+  const ss = [...sessions].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('hist-lbl').textContent = ss.length + ' sessions';
+  const list = document.getElementById('history-list');
+  list.innerHTML = '';
+
+  ss.forEach(s => {
+    const p = s.amount >= 0;
+    const dateStr = fmtDate(s.date);
+    const noteDisplay = s.note || '—';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'swipe-container';
+
+    // Red trash reveal (right side, appears on swipe)
+    const delReveal = document.createElement('div');
+    delReveal.className = 'delete-reveal';
+    delReveal.innerHTML = `<svg class="trash-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+    delReveal.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openModal(s.id, sessionEl, s.note, dateStr);
+    });
+
+    // Session row
+    const sessionEl = document.createElement('div');
+    sessionEl.className = 'session';
+    sessionEl.innerHTML = `
+      <div class="s-bar ${p?'pos':'neg'}"></div>
+      <div class="s-info">
+        <div class="s-date">${dateStr}</div>
+        <div class="s-note">${noteDisplay}</div>
+      </div>
+      <div class="s-right">
+        <div class="s-amt ${p?'pos':'neg'}">${idr(s.amount,false)}</div>
+        <div class="inline-trash" title="Delete">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d63030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </div>
+      </div>
+    `;
+
+    wrap.appendChild(delReveal);
+    wrap.appendChild(sessionEl);
+
+    // ── TOUCH SWIPE ──
+    let startX = 0, dx = 0, dragging = false;
+    sessionEl.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+      dx = 0; dragging = true;
+    }, {passive:true});
+    sessionEl.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      dx = e.touches[0].clientX - startX;
+      if (dx < 0) {
+        sessionEl.style.transition = 'none';
+        sessionEl.style.transform = `translateX(${Math.max(dx,-72)}px)`;
+      }
+    }, {passive:true});
+    sessionEl.addEventListener('touchend', () => {
+      dragging = false;
+      sessionEl.style.transition = '';
+      sessionEl.style.transform = '';
+      if (dx < -30) {
+        closeAllRows();
+        sessionEl.classList.add('revealed');
+      } else {
+        sessionEl.classList.remove('revealed');
+      }
+      dx = 0;
+    });
+
+    // ── TAP to select / show inline trash ──
+    sessionEl.addEventListener('click', (e) => {
+      // if tapping the inline trash icon
+      if (e.target.closest('.inline-trash')) {
+        e.stopPropagation();
+        openModal(s.id, sessionEl, s.note, dateStr);
+        return;
+      }
+      // if row is swiped open, close it
+      if (sessionEl.classList.contains('revealed')) {
+        sessionEl.classList.remove('revealed');
+        return;
+      }
+      // toggle selected (shows inline trash)
+      const alreadySelected = sessionEl.classList.contains('selected');
+      closeAllRows();
+      if (!alreadySelected) sessionEl.classList.add('selected');
+    });
+
+    list.appendChild(wrap);
+  });
+
+  // Tap anywhere outside to deselect
+  document.getElementById('history-list').addEventListener('click', e => {
+    if (!e.target.closest('.session')) closeAllRows();
+  }, {capture: false});
+}
+
+// ── MONTHLY ───────────────────────────────────────────────────────────────────
+const mCharts = {};
+function renderMonthly() {
+  const ss = [...sessions].sort((a,b)=>a.date.localeCompare(b.date));
+  const months = {};
+  ss.forEach(s=>{ const mk=monthKey(s.date); if(!months[mk]) months[mk]=[]; months[mk].push(s); });
+  const keys = Object.keys(months).sort().reverse();
+  const el = document.getElementById('monthly-list');
+  el.innerHTML = '';
+  keys.forEach(mk=>{
+    const ms=months[mk], tot=ms.reduce((a,x)=>a+x.amount,0), w=ms.filter(x=>x.amount>0).length;
+    const wr=(w/ms.length*100).toFixed(2), [yr,mo]=mk.split('-');
+    const name=new Date(+yr,+mo-1,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'}), pos=tot>=0;
+    const block=document.createElement('div');
+    block.className='month-block';
+    block.innerHTML=`
+      <div class="month-hdr"><span class="month-name">${name}</span><span class="month-total" style="color:${pos?'var(--green)':'var(--red)'}">${idr(tot,false)}</span></div>
+      <div class="month-meta">${w}W · ${ms.length-w}L · ${wr}% wr</div>
+      <div class="month-chart"><canvas id="mc-${mk}"></canvas></div>
+      <div style="height:1px;background:var(--border);margin-top:20px;"></div>
+    `;
+    el.appendChild(block);
+    setTimeout(()=>{
+      const c=document.getElementById('mc-'+mk); if(!c) return;
+      if(mCharts[mk]) mCharts[mk].destroy();
+      const byDay={};
+      ms.forEach(s=>{ const d=parseInt(s.date.slice(8,10)); byDay[d]=(byDay[d]||0)+s.amount; });
+      const days=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
+      mCharts[mk]=new Chart(c.getContext('2d'),{
+        type:'bar',
+        data:{ labels:days.map(String), datasets:[{ data:days.map(d=>byDay[d]), backgroundColor:days.map(d=>byDay[d]>=0?'rgba(0,153,94,0.8)':'rgba(214,48,48,0.8)'), borderRadius:3, borderSkipped:false }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>idr(c.raw,false), title:ts=>'Day '+ts[0].label }, backgroundColor:'#fff', bodyColor:'#111', borderColor:'rgba(0,0,0,0.1)', borderWidth:1 } }, scales:{ x:{ticks:{color:'#aaa',font:{size:9,family:'DM Mono'},maxRotation:0},grid:{display:false}}, y:{ticks:{color:'#aaa',font:{size:9,family:'DM Mono'},callback:v=>idrShort(v)},grid:{color:'rgba(0,0,0,0.05)'}} } }
+      });
+    },0);
+  });
+}
+
+// ── ADD ───────────────────────────────────────────────────────────────────────
+function addSession() {
+  const date=document.getElementById('inp-date').value;
+  const amount=parseInt(document.getElementById('inp-amt').value,10);
+  const note=document.getElementById('inp-note').value.trim();
+  if(!date||isNaN(amount)){alert('Please fill in date and amount.');return;}
+  sessions.push({id:Date.now(),date,amount,note});
+  save(sessions);
+  document.getElementById('inp-amt').value='';
+  document.getElementById('inp-note').value='';
+  switchPage('dashboard');
+}
+
+// ── ROUTING ───────────────────────────────────────────────────────────────────
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{ if(b.getAttribute('onclick').includes("'"+name+"'")) b.classList.add('active'); });
+  if(name==='dashboard') renderDashboard();
+  if(name==='history') renderHistory();
+  if(name==='monthly') renderMonthly();
+  if(name==='add') document.getElementById('inp-date').value=new Date().toISOString().split('T')[0];
+}
+
+renderDashboard();
+</script>
+</body>
+</html>
