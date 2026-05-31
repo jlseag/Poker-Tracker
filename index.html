@@ -44,7 +44,7 @@
   .dropdown-trigger.active { background: var(--acc-bg); color: var(--acc-txt); border-color: var(--acc-bg); }
   .dropdown-trigger .caret { font-size: 9px; transition: transform 0.2s; }
   .dropdown-trigger.open .caret { transform: rotate(180deg); }
-  .dropdown-menu { display: none; position: absolute; top: calc(100% + 6px); left: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; min-width: 160px; z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.12); overflow: hidden; }
+  .dropdown-menu { display: none; position: absolute; top: calc(100% + 6px); left: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; min-width: 160px; z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.12); overflow: hidden; max-height: 320px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .dropdown-menu.show { display: block; }
   .dd-year { padding: 10px 14px 4px; font-family: var(--font-m); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
   .dd-item { padding: 10px 16px; font-family: var(--font-m); font-size: 12px; color: var(--text); cursor: pointer; }
@@ -372,7 +372,10 @@ function getYearsAndMonths() {
     map[yr].add(mk);
   });
   const result = {};
-  Object.keys(map).sort().forEach(yr => { result[yr] = [...map[yr]].sort(); });
+  // reverse: most recent year first, most recent month first within each year
+  Object.keys(map).sort().reverse().forEach(yr => {
+    result[yr] = [...map[yr]].sort().reverse();
+  });
   return result;
 }
 function monthLabel(mk) {
