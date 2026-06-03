@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --bg:#f5f5f0;--bg2:#ffffff;--border:rgba(0,0,0,0.09);
@@ -19,16 +20,56 @@
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   html,body{background:var(--bg);color:var(--text);font-family:var(--font-d);min-height:100vh;overflow-x:hidden;}
+
+  /* AUTH SCREEN */
+  .auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px 24px;text-align:center;}
+  .auth-logo{font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:8px;}
+  .auth-logo span{color:#1a7a4a;}
+  .auth-sub{font-family:var(--font-m);font-size:12px;color:var(--muted);margin-bottom:48px;}
+  .auth-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:32px 24px;width:100%;max-width:340px;box-shadow:0 4px 24px rgba(0,0,0,0.08);}
+  .auth-title{font-size:18px;font-weight:700;margin-bottom:8px;}
+  .auth-desc{font-family:var(--font-m);font-size:11px;color:var(--muted);margin-bottom:28px;line-height:1.6;}
+  .google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px 20px;background:#fff;border:1px solid var(--border);border-radius:10px;font-family:var(--font-d);font-size:14px;font-weight:600;color:var(--text);cursor:pointer;box-shadow:var(--shadow);transition:box-shadow .15s;}
+  .google-btn:hover{box-shadow:0 2px 8px rgba(0,0,0,0.12);}
+  .google-btn svg{flex-shrink:0;}
+  .auth-note{font-family:var(--font-m);font-size:10px;color:var(--muted);margin-top:16px;line-height:1.6;}
+
+  /* LOADING */
+  .loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;}
+  .spinner{width:28px;height:28px;border:2.5px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-txt{font-family:var(--font-m);font-size:12px;color:var(--muted);}
+
+  /* HEADER */
   .header{padding:52px 20px 10px;background:var(--bg);position:sticky;top:0;z-index:20;border-bottom:1px solid var(--border);}
+  .header-inner{display:flex;align-items:flex-end;justify-content:space-between;}
   .logo{font-size:22px;font-weight:800;letter-spacing:-0.5px;}
   .logo span{color:#1a7a4a;}
   .header-sub{font-family:var(--font-m);font-size:11px;color:var(--muted);margin-top:1px;}
+  /* USER AVATAR */
+  .user-btn{display:flex;align-items:center;gap:7px;padding:6px 10px 6px 6px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;cursor:pointer;box-shadow:var(--shadow);flex-shrink:0;}
+  .avatar{width:26px;height:26px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:11px;font-weight:500;color:#fff;overflow:hidden;flex-shrink:0;}
+  .avatar img{width:100%;height:100%;object-fit:cover;}
+  .user-name{font-family:var(--font-m);font-size:11px;color:var(--text);max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  /* USER MENU */
+  .user-menu-wrap{position:relative;}
+  .user-menu{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--bg2);border:1px solid var(--border);border-radius:12px;min-width:200px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.12);overflow:hidden;}
+  .user-menu.show{display:block;}
+  .um-email{padding:12px 16px;font-family:var(--font-m);font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);}
+  .um-item{padding:12px 16px;font-family:var(--font-m);font-size:12px;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:8px;}
+  .um-item:hover{background:var(--bg);}
+  .um-item.danger{color:var(--red);}
+
+  /* NAV */
   .nav{display:flex;background:var(--bg);border-bottom:1px solid var(--border);}
   .nav-btn{flex:1;padding:13px 4px;font-family:var(--font-d);font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;border:none;background:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
   .nav-btn.active{color:var(--text);border-bottom-color:var(--text);}
+
   .content{padding:20px 16px 100px;}
   .page{display:none;}
   .page.active{display:block;}
+
   /* TIMELINE */
   .timeline-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
   .tl-pill{padding:7px 14px;font-family:var(--font-m);font-size:11px;border:1px solid var(--border);background:var(--bg2);color:var(--muted);border-radius:20px;cursor:pointer;white-space:nowrap;box-shadow:var(--shadow);}
@@ -45,6 +86,7 @@
   .dd-item:hover{background:var(--bg);}
   .dd-item.active{color:var(--green);font-weight:500;}
   .dd-divider{height:1px;background:var(--border);margin:4px 0;}
+
   /* RANGE */
   .range-picker{display:none;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;box-shadow:var(--shadow);}
   .range-picker.show{display:block;}
@@ -53,6 +95,7 @@
   .range-input:focus{border-color:var(--text);}
   .range-sep{font-family:var(--font-m);font-size:11px;color:var(--muted);}
   .range-apply{margin-top:10px;width:100%;padding:11px;background:var(--acc-bg);color:var(--acc-txt);border:none;border-radius:8px;font-family:var(--font-d);font-size:13px;font-weight:700;cursor:pointer;}
+
   /* METRICS */
   .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
   .metric{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 14px;box-shadow:var(--shadow);}
@@ -63,16 +106,26 @@
   .m-val.pos{color:var(--green);}
   .m-val.neg{color:var(--red);}
   .m-sub{font-family:var(--font-m);font-size:10px;color:var(--muted);margin-top:4px;}
+
   /* STREAK */
   .streak{display:inline-flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:8px 16px;font-family:var(--font-m);font-size:12px;color:var(--text);margin-bottom:20px;box-shadow:var(--shadow);}
   .streak-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
   /* CHART */
   .chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;box-shadow:var(--shadow);}
   .card-title{font-family:var(--font-m);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:14px;}
   .chart-wrap{position:relative;height:180px;}
+
   /* HISTORY */
   .section-lbl{font-family:var(--font-m);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px;}
   .hint-txt{font-family:var(--font-m);font-size:10px;color:var(--muted);margin-bottom:14px;}
+  .select-bar{display:none;align-items:center;justify-content:space-between;padding:10px 0 14px;}
+  .select-bar.show{display:flex;}
+  .select-actions{display:flex;align-items:center;gap:10px;}
+  .sel-btn{padding:7px 14px;font-family:var(--font-m);font-size:11px;border:1px solid var(--border);background:var(--bg2);color:var(--text);border-radius:20px;cursor:pointer;box-shadow:var(--shadow);}
+  .sel-btn.danger{background:var(--red);color:#fff;border-color:var(--red);}
+  .sel-btn.active-sel{background:var(--acc-bg);color:var(--acc-txt);border-color:var(--acc-bg);}
+  .sel-count{font-family:var(--font-m);font-size:11px;color:var(--muted);}
   .swipe-container{position:relative;overflow:hidden;border-bottom:1px solid var(--border);}
   .swipe-container:last-child{border-bottom:none;}
   .delete-reveal{position:absolute;right:0;top:0;bottom:0;width:72px;background:var(--red);display:flex;align-items:center;justify-content:center;cursor:pointer;}
@@ -91,6 +144,14 @@
   .s-amt.neg{color:var(--red);}
   .inline-trash{opacity:0;pointer-events:none;transition:opacity .18s;display:flex;align-items:center;}
   .session.selected .inline-trash{opacity:1;pointer-events:auto;}
+  .cb-wrap{display:none;align-items:center;justify-content:center;width:22px;flex-shrink:0;}
+  .select-mode .cb-wrap{display:flex;}
+  .select-mode .delete-reveal{display:none;}
+  .cb{width:18px;height:18px;border:2px solid #ccc;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,border-color .15s;}
+  .cb.checked{background:var(--green);border-color:var(--green);}
+  .cb.checked::after{content:'';display:block;width:5px;height:9px;border:2px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px);}
+  .select-mode .session{cursor:default;}
+
   /* MODAL */
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:999;align-items:center;justify-content:center;padding:24px;}
   .modal-overlay.show{display:flex;}
@@ -102,6 +163,7 @@
   .modal-btn{flex:1;padding:13px;border:none;border-radius:10px;font-family:var(--font-d);font-size:14px;font-weight:700;cursor:pointer;}
   .modal-btn.cancel{background:var(--bg);color:var(--text);border:1px solid var(--border);}
   .modal-btn.confirm{background:var(--red);color:#fff;}
+
   /* MONTHLY */
   .month-block{margin-bottom:28px;}
   .month-hdr{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
@@ -109,6 +171,7 @@
   .month-total{font-family:var(--font-m);font-size:12px;font-weight:500;}
   .month-meta{font-family:var(--font-m);font-size:10px;color:var(--muted);margin-bottom:10px;}
   .month-chart{position:relative;height:100px;}
+
   /* ADD */
   .form-section{margin-bottom:20px;}
   .f-label{font-family:var(--font-m);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);display:block;margin-bottom:8px;}
@@ -119,29 +182,17 @@
   .f-hint{font-family:var(--font-m);font-size:10px;color:var(--muted);margin-top:6px;}
   .save-btn{width:100%;padding:16px;background:var(--acc-bg);color:var(--acc-txt);border:none;border-radius:12px;font-family:var(--font-d);font-size:16px;font-weight:800;cursor:pointer;margin-top:8px;}
   .save-btn:active{opacity:.8;}
+  .save-btn:disabled{opacity:.4;cursor:not-allowed;}
 
-  /* SELECT MODE */
-  .select-bar{display:none;align-items:center;justify-content:space-between;padding:10px 0 14px;}
-  .select-bar.show{display:flex;}
-  .select-actions{display:flex;align-items:center;gap:10px;}
-  .sel-btn{padding:7px 14px;font-family:var(--font-m);font-size:11px;border:1px solid var(--border);background:var(--bg2);color:var(--text);border-radius:20px;cursor:pointer;box-shadow:var(--shadow);}
-  .sel-btn.danger{background:var(--red);color:#fff;border-color:var(--red);}
-  .sel-btn.active-sel{background:var(--acc-bg);color:var(--acc-txt);border-color:var(--acc-bg);}
-  .sel-count{font-family:var(--font-m);font-size:11px;color:var(--muted);}
-  /* CHECKBOX */
-  .cb-wrap{display:none;align-items:center;justify-content:center;width:22px;flex-shrink:0;}
-  .select-mode .cb-wrap{display:flex;}
-  .select-mode .delete-reveal{display:none;}
-  .cb{width:18px;height:18px;border:2px solid var(--dim,#ccc);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,border-color .15s;}
-  .cb.checked{background:var(--green);border-color:var(--green);}
-  .cb.checked::after{content:'';display:block;width:5px;height:9px;border:2px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px);}
-  /* hide swipe/tap-select in select mode */
-  .select-mode .session{cursor:default;}
-
+  /* SYNC STATUS */
+  .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;margin-right:4px;}
+  .sync-dot.syncing{background:#f5a623;animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
 </style>
 </head>
 <body>
 
+<!-- CONFIRM MODAL -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
     <div class="modal-icon">🗑️</div>
@@ -154,141 +205,192 @@
   </div>
 </div>
 
-<div class="header">
-  <div class="logo">POKER<span>LOG</span></div>
-  <div class="header-sub">All-time tracker · IDR</div>
+<!-- AUTH SCREEN -->
+<div id="auth-screen" class="auth-screen" style="display:none;">
+  <div class="auth-logo">POKER<span>LOG</span></div>
+  <div class="auth-sub">All-time tracker · IDR</div>
+  <div class="auth-card">
+    <div class="auth-title">Sign in to your account</div>
+    <div class="auth-desc">Your sessions sync across all your devices. Sign in with Google to get started.</div>
+    <button class="google-btn" onclick="signInWithGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.31z"/></svg>
+      Continue with Google
+    </button>
+    <div class="auth-note">Your data is private and only accessible when signed in to your account.</div>
+  </div>
 </div>
 
-<div class="nav">
-  <button class="nav-btn active" onclick="switchPage('dashboard')">Dashboard</button>
-  <button class="nav-btn" onclick="switchPage('history')">History</button>
-  <button class="nav-btn" onclick="switchPage('monthly')">Monthly</button>
-  <button class="nav-btn" onclick="switchPage('add')">+ Add</button>
+<!-- LOADING SCREEN -->
+<div id="loading-screen" class="loading-screen">
+  <div class="spinner"></div>
+  <div class="loading-txt">Loading...</div>
 </div>
 
-<div class="content">
-  <div id="page-dashboard" class="page active">
-    <div class="timeline-bar" id="timeline-bar"></div>
-    <div class="range-picker" id="range-picker">
-      <div class="range-row">
-        <input type="date" id="range-from" class="range-input"/>
-        <span class="range-sep">→</span>
-        <input type="date" id="range-to" class="range-input"/>
+<!-- APP -->
+<div id="app" style="display:none;">
+  <div class="header">
+    <div class="header-inner">
+      <div>
+        <div class="logo">POKER<span>LOG</span></div>
+        <div class="header-sub">All-time tracker · IDR</div>
       </div>
-      <button class="range-apply" onclick="applyRange()">Apply</button>
-    </div>
-    <div class="metrics" id="metrics"></div>
-    <div id="streak-el"></div>
-    <div class="chart-card">
-      <div class="card-title">Profit over time</div>
-      <div class="chart-wrap"><canvas id="profit-chart"></canvas></div>
-    </div>
-  </div>
-
-  <div id="page-history" class="page">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-      <div class="section-lbl" id="hist-lbl"></div>
-      <button class="sel-btn" id="select-toggle-btn" onclick="toggleSelectMode()">Select</button>
-    </div>
-    <div class="select-bar" id="select-bar">
-      <div class="select-actions">
-        <button class="sel-btn" onclick="selectAll()">Select all</button>
-        <span class="sel-count" id="sel-count">0 selected</span>
+      <div class="user-menu-wrap" id="user-menu-wrap">
+        <div class="user-btn" onclick="toggleUserMenu()">
+          <div class="avatar" id="user-avatar">?</div>
+          <div class="user-name" id="user-name">...</div>
+        </div>
+        <div class="user-menu" id="user-menu">
+          <div class="um-email" id="user-email-display"></div>
+          <div class="um-item danger" onclick="signOut()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </div>
+        </div>
       </div>
-      <button class="sel-btn danger" id="delete-selected-btn" onclick="deleteSelected()" style="display:none;">Delete</button>
     </div>
-    <div class="hint-txt" id="hist-hint">Swipe left or tap a session to reveal the delete option</div>
-    <div id="history-list"></div>
   </div>
 
-  <div id="page-monthly" class="page">
-    <div id="monthly-list"></div>
+  <div class="nav">
+    <button class="nav-btn active" onclick="switchPage('dashboard')">Dashboard</button>
+    <button class="nav-btn" onclick="switchPage('history')">History</button>
+    <button class="nav-btn" onclick="switchPage('monthly')">Monthly</button>
+    <button class="nav-btn" onclick="switchPage('add')">+ Add</button>
   </div>
 
-  <div id="page-add" class="page">
-    <div class="form-section">
-      <label class="f-label">Date</label>
-      <input type="date" id="inp-date" class="f-input"/>
+  <div class="content">
+    <div id="page-dashboard" class="page active">
+      <div class="timeline-bar" id="timeline-bar"></div>
+      <div class="range-picker" id="range-picker">
+        <div class="range-row">
+          <input type="date" id="range-from" class="range-input"/>
+          <span class="range-sep">→</span>
+          <input type="date" id="range-to" class="range-input"/>
+        </div>
+        <button class="range-apply" onclick="applyRange()">Apply</button>
+      </div>
+      <div class="metrics" id="metrics"></div>
+      <div id="streak-el"></div>
+      <div class="chart-card">
+        <div class="card-title">Profit over time</div>
+        <div class="chart-wrap"><canvas id="profit-chart"></canvas></div>
+      </div>
     </div>
-    <div class="form-section">
-      <label class="f-label">Result (thousands Rp)</label>
-      <input type="number" id="inp-amt" class="f-input" placeholder="500 or -300"/>
-      <div class="f-hint">Enter as in your log — 500 = Rp 500,000</div>
+
+    <div id="page-history" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div class="section-lbl" id="hist-lbl"></div>
+        <button class="sel-btn" id="select-toggle-btn" onclick="toggleSelectMode()">Select</button>
+      </div>
+      <div class="select-bar" id="select-bar">
+        <div class="select-actions">
+          <button class="sel-btn" onclick="selectAll()">Select all</button>
+          <span class="sel-count" id="sel-count">0 selected</span>
+        </div>
+        <button class="sel-btn danger" id="delete-selected-btn" onclick="deleteSelected()" style="display:none;">Delete</button>
+      </div>
+      <div class="hint-txt" id="hist-hint">Swipe left or tap a session to reveal the delete option</div>
+      <div id="history-list"></div>
     </div>
-    <div class="form-section">
-      <label class="f-label">Notes (optional)</label>
-      <textarea id="inp-note" class="f-input" placeholder="e.g. straight flush vs Anya"></textarea>
+
+    <div id="page-monthly" class="page">
+      <div id="monthly-list"></div>
     </div>
-    <button class="save-btn" onclick="addSession()">Save Session</button>
-    <div style="text-align:center;font-family:var(--font-m);font-size:11px;color:var(--muted);margin-top:16px;">Saved to your browser's local storage</div>
+
+    <div id="page-add" class="page">
+      <div class="form-section">
+        <label class="f-label">Date</label>
+        <input type="date" id="inp-date" class="f-input"/>
+      </div>
+      <div class="form-section">
+        <label class="f-label">Result (thousands Rp)</label>
+        <input type="number" id="inp-amt" class="f-input" placeholder="500 or -300"/>
+        <div class="f-hint">Enter as in your log — 500 = Rp 500,000</div>
+      </div>
+      <div class="form-section">
+        <label class="f-label">Notes (optional)</label>
+        <textarea id="inp-note" class="f-input" placeholder="e.g. straight flush vs Anya"></textarea>
+      </div>
+      <button class="save-btn" id="save-btn" onclick="addSession()">Save Session</button>
+      <div style="text-align:center;font-family:var(--font-m);font-size:11px;color:var(--muted);margin-top:16px;">
+        <span class="sync-dot" id="sync-dot"></span><span id="sync-status">Synced to cloud</span>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-const RAW = [
-  {d:'2025-05-01',v:500,n:''},{d:'2025-05-05',v:-700,n:''},{d:'2025-05-10',v:500,n:''},
-  {d:'2025-05-15',v:-800,n:''},{d:'2025-05-17',v:-250,n:''},{d:'2025-05-20',v:400,n:''},
-  {d:'2025-05-28',v:250,n:''},
-  {d:'2025-06-05',v:-400,n:''},{d:'2025-06-10',v:200,n:''},{d:'2025-06-15',v:-100,n:''},
-  {d:'2025-06-20',v:-300,n:''},{d:'2025-06-25',v:650,n:''},{d:'2025-06-28',v:-900,n:''},
-  {d:'2025-07-01',v:210,n:''},{d:'2025-07-05',v:320,n:''},{d:'2025-07-10',v:-50,n:''},
-  {d:'2025-07-15',v:470,n:''},{d:'2025-07-20',v:-70,n:''},{d:'2025-07-25',v:575,n:''},
-  {d:'2025-07-28',v:812,n:''},
-  {d:'2025-08-03',v:581,n:''},{d:'2025-08-05',v:-350,n:''},{d:'2025-08-09',v:630,n:''},
-  {d:'2025-08-15',v:335,n:''},{d:'2025-08-20',v:520,n:''},{d:'2025-08-25',v:300,n:''},
-  {d:'2025-08-28',v:312,n:''},
-  {d:'2025-11-01',v:525,n:''},{d:'2025-11-03',v:-170,n:''},{d:'2025-11-05',v:755,n:''},
-  {d:'2025-11-07',v:516,n:''},{d:'2025-11-12',v:550,n:''},{d:'2025-11-14',v:335,n:''},
-  {d:'2025-11-20',v:1200,n:''},{d:'2025-11-25',v:100,n:''},{d:'2025-11-28',v:250,n:''},
-  {d:'2025-12-01',v:-200,n:''},{d:'2025-12-02',v:-700,n:''},{d:'2025-12-05',v:1162,n:''},
-  {d:'2025-12-06',v:-450,n:''},{d:'2025-12-08',v:-1500,n:''},{d:'2025-12-10',v:310,n:''},
-  {d:'2025-12-15',v:-320,n:''},{d:'2025-12-20',v:400,n:''},{d:'2025-12-25',v:500,n:''},
-  {d:'2025-12-30',v:-450,n:''},
-  {d:'2026-01-02',v:150,n:''},{d:'2026-01-05',v:310,n:''},{d:'2026-01-07',v:300,n:''},
-  {d:'2026-01-10',v:250,n:'john freak'},{d:'2026-01-13',v:430,n:'brian chian'},
-  {d:'2026-01-14',v:746,n:''},{d:'2026-01-16',v:400,n:''},{d:'2026-01-18',v:300,n:''},
-  {d:'2026-01-20',v:-37,n:'dim phil alsut'},{d:'2026-01-31',v:-700,n:'played bad'},
-  {d:'2026-02-06',v:-300,n:'hagen bad beats'},{d:'2026-02-15',v:700,n:'online 50k tourney'},
-  {d:'2026-02-17',v:-800,n:'ko sam angpao'},{d:'2026-02-19',v:1200,n:'the Hagens 88'},
-  {d:'2026-02-22',v:656,n:'card fixed?'},{d:'2026-02-28',v:1200,n:'titis 10/2'},
-  {d:'2026-03-05',v:-83,n:'online w calv kenz'},{d:'2026-03-07',v:900,n:'straight flush v anya'},
-  {d:'2026-03-09',v:568,n:'NIT online gaming'},{d:'2026-03-12',v:-300,n:'ariel online win'},
-  {d:'2026-03-15',v:279,n:'hero ajez w 2 pair'},{d:'2026-03-15',v:-50,n:'tyson coolers 1v1'},
-  {d:'2026-03-16',v:748,n:'onl james tys rey'},{d:'2026-03-21',v:480,n:'onl 4 man'},
-  {d:'2026-03-24',v:100,n:'tys heads up'},{d:'2026-03-25',v:25,n:'ajez tys james'},
-  {d:'2026-03-26',v:100,n:'ajez heads up'},{d:'2026-03-29',v:372,n:'onl james tys rey'},
-  {d:'2026-03-30',v:75,n:'tys bad beat AA 2x'},{d:'2026-03-31',v:-1500,n:'onl AA vs AK james'},
-  {d:'2026-04-02',v:60,n:'tys patio nuts always'},{d:'2026-04-05',v:796,n:'called out james a5'},
-  {d:'2026-04-07',v:1175,n:'had to fold jj twice'},{d:'2026-04-09',v:443,n:'allin 2x pot bluff titi K2'},
-  {d:'2026-04-11',v:-138,n:'pure donation'},{d:'2026-04-12',v:280,n:'hero called titi king high'},
-  {d:'2026-04-13',v:-193,n:'did not win a single 50k tourney'},{d:'2026-04-17',v:45,n:''},
-  {d:'2026-04-18',v:-414,n:''},{d:'2026-04-19',v:151,n:'straight flush v anya aq diamond'},
-  {d:'2026-04-20',v:-150,n:''},{d:'2026-04-21',v:570,n:''},
-  {d:'2026-04-25',v:700,n:'offline Remys w ajez, 10/2 fullhouse vs 66'},
-  {d:'2026-04-26',v:406,n:"called remy's triple barrel bluff j9"},
-  {d:'2026-04-27',v:147,n:'Tim bluffed into my straight'},{d:'2026-04-29',v:-50,n:'1v1 ajez heads up'},
-  {d:'2026-05-01',v:1500,n:'offline remys w abe, folded nut straight against phil'},
-  {d:'2026-05-04',v:-227,n:'trolling online'},{d:'2026-05-05',v:220,n:'Ajez ran it once'},
-  {d:'2026-05-08',v:1560,n:'live reads at remy, hero call ajez ace high'},
-  {d:'2026-05-09',v:817,n:'titi punted 500k with 62 offsuit'},
-  {d:'2026-05-12',v:1560,n:'bluffed remy, he folded second nut flush k10'},
-  {d:'2026-05-14',v:718,n:'taking turns with echo, bluffed reyner with 57'},
-  {d:'2026-05-15',v:-600,n:'absolute bluff rampage in remys'},
-  {d:'2026-05-16',v:370,n:'played with cha, cho, ariel, jen, nadia'},
-  {d:'2026-05-18',v:437,n:'3 j 3 7 5, pocket 77 boat against remy'},
-  {d:'2026-05-19',v:277,n:'ak boat kk2a4 vs ajez j7 diamond flush'},
-  {d:'2026-05-22',v:600,n:'called kenzies 102 triple barrel with aces'},
-  {d:'2026-05-23',v:635,n:'online bluff on seon'},
+// ── SUPABASE INIT ─────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://zpppziwtxqhxtrvdnkes.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwcHB6aXd0eHFoeHRydmRua2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NTg3MTIsImV4cCI6MjA5NjAzNDcxMn0.jbDtMkLMYY0B7BH2DKYy5C4Z7JpiFVanUnoKhvPZfDk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── SEED DATA (jlseagull715@gmail.com only) ───────────────────────────────────
+const SEED = [
+  {date:'2025-05-01',amount:500,note:''},{date:'2025-05-05',amount:-700,note:''},{date:'2025-05-10',amount:500,note:''},
+  {date:'2025-05-15',amount:-800,note:''},{date:'2025-05-17',amount:-250,note:''},{date:'2025-05-20',amount:400,note:''},
+  {date:'2025-05-28',amount:250,note:''},
+  {date:'2025-06-05',amount:-400,note:''},{date:'2025-06-10',amount:200,note:''},{date:'2025-06-15',amount:-100,note:''},
+  {date:'2025-06-20',amount:-300,note:''},{date:'2025-06-25',amount:650,note:''},{date:'2025-06-28',amount:-900,note:''},
+  {date:'2025-07-01',amount:210,note:''},{date:'2025-07-05',amount:320,note:''},{date:'2025-07-10',amount:-50,note:''},
+  {date:'2025-07-15',amount:470,note:''},{date:'2025-07-20',amount:-70,note:''},{date:'2025-07-25',amount:575,note:''},
+  {date:'2025-07-28',amount:812,note:''},
+  {date:'2025-08-03',amount:581,note:''},{date:'2025-08-05',amount:-350,note:''},{date:'2025-08-09',amount:630,note:''},
+  {date:'2025-08-15',amount:335,note:''},{date:'2025-08-20',amount:520,note:''},{date:'2025-08-25',amount:300,note:''},
+  {date:'2025-08-28',amount:312,note:''},
+  {date:'2025-11-01',amount:525,note:''},{date:'2025-11-03',amount:-170,note:''},{date:'2025-11-05',amount:755,note:''},
+  {date:'2025-11-07',amount:516,note:''},{date:'2025-11-12',amount:550,note:''},{date:'2025-11-14',amount:335,note:''},
+  {date:'2025-11-20',amount:1200,note:''},{date:'2025-11-25',amount:100,note:''},{date:'2025-11-28',amount:250,note:''},
+  {date:'2025-12-01',amount:-200,note:''},{date:'2025-12-02',amount:-700,note:''},{date:'2025-12-05',amount:1162,note:''},
+  {date:'2025-12-06',amount:-450,note:''},{date:'2025-12-08',amount:-1500,note:''},{date:'2025-12-10',amount:310,note:''},
+  {date:'2025-12-15',amount:-320,note:''},{date:'2025-12-20',amount:400,note:''},{date:'2025-12-25',amount:500,note:''},
+  {date:'2025-12-30',amount:-450,note:''},
+  {date:'2026-01-02',amount:150,note:''},{date:'2026-01-05',amount:310,note:''},{date:'2026-01-07',amount:300,note:''},
+  {date:'2026-01-10',amount:250,note:'john freak'},{date:'2026-01-13',amount:430,note:'brian chian'},
+  {date:'2026-01-14',amount:746,note:''},{date:'2026-01-16',amount:400,note:''},{date:'2026-01-18',amount:300,note:''},
+  {date:'2026-01-20',amount:-37,note:'dim phil alsut'},{date:'2026-01-31',amount:-700,note:'played bad'},
+  {date:'2026-02-06',amount:-300,note:'hagen bad beats'},{date:'2026-02-15',amount:700,note:'online 50k tourney'},
+  {date:'2026-02-17',amount:-800,note:'ko sam angpao'},{date:'2026-02-19',amount:1200,note:'the Hagens 88'},
+  {date:'2026-02-22',amount:656,note:'card fixed?'},{date:'2026-02-28',amount:1200,note:'titis 10/2'},
+  {date:'2026-03-05',amount:-83,note:'online w calv kenz'},{date:'2026-03-07',amount:900,note:'straight flush v anya'},
+  {date:'2026-03-09',amount:568,note:'NIT online gaming'},{date:'2026-03-12',amount:-300,note:'ariel online win'},
+  {date:'2026-03-15',amount:279,note:'hero ajez w 2 pair'},{date:'2026-03-15',amount:-50,note:'tyson coolers 1v1'},
+  {date:'2026-03-16',amount:748,note:'onl james tys rey'},{date:'2026-03-21',amount:480,note:'onl 4 man'},
+  {date:'2026-03-24',amount:100,note:'tys heads up'},{date:'2026-03-25',amount:25,note:'ajez tys james'},
+  {date:'2026-03-26',amount:100,note:'ajez heads up'},{date:'2026-03-29',amount:372,note:'onl james tys rey'},
+  {date:'2026-03-30',amount:75,note:'tys bad beat AA 2x'},{date:'2026-03-31',amount:-1500,note:'onl AA vs AK james'},
+  {date:'2026-04-02',amount:60,note:'tys patio nuts always'},{date:'2026-04-05',amount:796,note:'called out james a5'},
+  {date:'2026-04-07',amount:1175,note:'had to fold jj twice'},{date:'2026-04-09',amount:443,note:'allin 2x pot bluff titi K2'},
+  {date:'2026-04-11',amount:-138,note:'pure donation'},{date:'2026-04-12',amount:280,note:'hero called titi king high'},
+  {date:'2026-04-13',amount:-193,note:'did not win a single 50k tourney'},{date:'2026-04-17',amount:45,note:''},
+  {date:'2026-04-18',amount:-414,note:''},{date:'2026-04-19',amount:151,note:'straight flush v anya aq diamond'},
+  {date:'2026-04-20',amount:-150,note:''},{date:'2026-04-21',amount:570,note:''},
+  {date:'2026-04-25',amount:700,note:'offline Remys w ajez, 10/2 fullhouse vs 66'},
+  {date:'2026-04-26',amount:406,note:"called remy's triple barrel bluff j9"},
+  {date:'2026-04-27',amount:147,note:'Tim bluffed into my straight'},{date:'2026-04-29',amount:-50,note:'1v1 ajez heads up'},
+  {date:'2026-05-01',amount:1500,note:'offline remys w abe, folded nut straight against phil'},
+  {date:'2026-05-04',amount:-227,note:'trolling online'},{date:'2026-05-05',amount:220,note:'Ajez ran it once'},
+  {date:'2026-05-08',amount:1560,note:'live reads at remy, hero call ajez ace high'},
+  {date:'2026-05-09',amount:817,note:'titi punted 500k with 62 offsuit'},
+  {date:'2026-05-12',amount:1560,note:'bluffed remy, he folded second nut flush k10'},
+  {date:'2026-05-14',amount:718,note:'taking turns with echo, bluffed reyner with 57'},
+  {date:'2026-05-15',amount:-600,note:'absolute bluff rampage in remys'},
+  {date:'2026-05-16',amount:370,note:'played with cha, cho, ariel, jen, nadia'},
+  {date:'2026-05-18',amount:437,note:'3 j 3 7 5, pocket 77 boat against remy'},
+  {date:'2026-05-19',amount:277,note:'ak boat kk2a4 vs ajez j7 diamond flush'},
+  {date:'2026-05-22',amount:600,note:'called kenzies 102 triple barrel with aces'},
+  {date:'2026-05-23',amount:635,note:'online bluff on seon'},
 ];
 
-const KEY = 'pokerlog_v1';
-function load() {
-  try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch(e) {}
-  return RAW.map((r,i) => ({id:i, date:r.d, amount:r.v, note:r.n}));
-}
-function save(ss) { try { localStorage.setItem(KEY, JSON.stringify(ss)); } catch(e) {} }
-let sessions = load();
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let sessions = [];
+let currentUser = null;
+let activeFilter = 'all', rangeFrom = '', rangeTo = '', ddOpen = false;
+let selectMode = false, selectedIds = new Set();
+let pendingDeleteId = null, pendingDeleteEl = null;
+let profitChart = null;
+const mCharts = {};
 
+// ── HELPERS ───────────────────────────────────────────────────────────────────
 function idr(v, round) {
   const real = (round ? Math.round(v) : v) * 1000;
   const abs = Math.abs(real);
@@ -308,9 +410,133 @@ function monthLabel(mk) {
   return new Date(+yr, +mo - 1, 1).toLocaleDateString('en-GB', {month:'long'});
 }
 
-// ── MODAL ─────────────────────────────────────────────────────────────────────
-let pendingDeleteId = null, pendingDeleteEl = null;
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function showScreen(name) {
+  document.getElementById('auth-screen').style.display = name === 'auth' ? 'flex' : 'none';
+  document.getElementById('loading-screen').style.display = name === 'loading' ? 'flex' : 'none';
+  document.getElementById('app').style.display = name === 'app' ? 'block' : 'none';
+}
 
+async function signInWithGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href }
+  });
+  if (error) alert('Sign in failed: ' + error.message);
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  currentUser = null;
+  sessions = [];
+  toggleUserMenu(false);
+  showScreen('auth');
+}
+
+function toggleUserMenu(forceClose) {
+  const menu = document.getElementById('user-menu');
+  if (forceClose === false || menu.classList.contains('show')) {
+    menu.classList.remove('show');
+  } else {
+    menu.classList.add('show');
+    setTimeout(function() {
+      document.addEventListener('click', closeMenuOutside, {once: true});
+    }, 0);
+  }
+}
+
+function closeMenuOutside(e) {
+  const wrap = document.getElementById('user-menu-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('user-menu').classList.remove('show');
+  }
+}
+
+function setUserUI(user) {
+  const email = user.email || '';
+  const name = user.user_metadata && user.user_metadata.full_name
+    ? user.user_metadata.full_name.split(' ')[0]
+    : email.split('@')[0];
+  const avatar = user.user_metadata && user.user_metadata.avatar_url
+    ? user.user_metadata.avatar_url : null;
+
+  document.getElementById('user-name').textContent = name;
+  document.getElementById('user-email-display').textContent = email;
+  const av = document.getElementById('user-avatar');
+  if (avatar) {
+    av.innerHTML = '<img src="' + avatar + '" alt="avatar"/>';
+  } else {
+    av.textContent = name.charAt(0).toUpperCase();
+  }
+}
+
+// ── DATA ──────────────────────────────────────────────────────────────────────
+function setSyncStatus(status) {
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-status');
+  if (!dot || !txt) return;
+  if (status === 'syncing') {
+    dot.className = 'sync-dot syncing';
+    txt.textContent = 'Saving...';
+  } else {
+    dot.className = 'sync-dot';
+    txt.textContent = 'Synced to cloud';
+  }
+}
+
+async function loadSessions() {
+  const { data, error } = await sb
+    .from('sessions')
+    .select('*')
+    .eq('user_email', currentUser.email)
+    .order('date', {ascending: false});
+  if (error) { console.error(error); return; }
+  sessions = (data || []).map(function(r) {
+    return { id: r.id, date: r.date, amount: r.amount, note: r.note || '' };
+  });
+}
+
+async function seedIfEmpty() {
+  if (currentUser.email !== 'jlseagull715@gmail.com') return;
+  if (sessions.length > 0) return;
+  // insert all seed data
+  const rows = SEED.map(function(s) {
+    return { user_email: currentUser.email, date: s.date, amount: s.amount, note: s.note };
+  });
+  const { error } = await sb.from('sessions').insert(rows);
+  if (error) { console.error('Seed error:', error); return; }
+  await loadSessions();
+}
+
+async function insertSession(date, amount, note) {
+  setSyncStatus('syncing');
+  const { data, error } = await sb.from('sessions').insert([{
+    user_email: currentUser.email,
+    date: date,
+    amount: amount,
+    note: note
+  }]).select().single();
+  if (error) { alert('Save failed: ' + error.message); setSyncStatus('synced'); return; }
+  sessions.unshift({ id: data.id, date: data.date, amount: data.amount, note: data.note || '' });
+  setSyncStatus('synced');
+}
+
+async function deleteSessionById(id) {
+  const { error } = await sb.from('sessions').delete().eq('id', id);
+  if (error) { alert('Delete failed: ' + error.message); return false; }
+  sessions = sessions.filter(function(s) { return s.id !== id; });
+  return true;
+}
+
+async function deleteSessionsBulk(ids) {
+  const { error } = await sb.from('sessions').delete().in('id', ids);
+  if (error) { alert('Delete failed: ' + error.message); return false; }
+  const idSet = new Set(ids);
+  sessions = sessions.filter(function(s) { return !idSet.has(s.id); });
+  return true;
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
 function openModal(id, sessionEl, note, dateStr) {
   pendingDeleteId = id;
   pendingDeleteEl = sessionEl;
@@ -323,37 +549,51 @@ function closeModal() {
   pendingDeleteId = null; pendingDeleteEl = null;
   document.getElementById('modal-overlay').classList.remove('show');
 }
-function confirmDelete() {
+async function confirmDelete() {
   if (pendingDeleteId === null) return;
-  const el = pendingDeleteEl;
   document.getElementById('modal-overlay').classList.remove('show');
-  if (el) el.classList.add('flying-out');
-  const delId = pendingDeleteId;
-  pendingDeleteId = null; pendingDeleteEl = null;
-  setTimeout(function() {
-    sessions = sessions.filter(function(x) { return String(x.id) !== String(delId); });
-    save(sessions);
+
+  if (pendingDeleteId === '__bulk__') {
+    const ids = Array.from(selectedIds);
+    pendingDeleteId = null; pendingDeleteEl = null;
+    const ok = await deleteSessionsBulk(ids);
+    if (!ok) return;
+    selectedIds.clear();
+    selectMode = false;
+    const btn = document.getElementById('select-toggle-btn');
+    const bar = document.getElementById('select-bar');
+    const hint = document.getElementById('hist-hint');
+    const list = document.getElementById('history-list');
+    if (btn) { btn.textContent = 'Select'; btn.classList.remove('active-sel'); }
+    if (bar) bar.classList.remove('show');
+    if (hint) hint.style.display = '';
+    if (list) list.classList.remove('select-mode');
+    updateSelCount();
     renderHistory();
-  }, 230);
+  } else {
+    const el = pendingDeleteEl;
+    const delId = pendingDeleteId;
+    pendingDeleteId = null; pendingDeleteEl = null;
+    if (el) el.classList.add('flying-out');
+    setTimeout(async function() {
+      await deleteSessionById(delId);
+      renderHistory();
+    }, 230);
+  }
 }
 document.getElementById('modal-overlay').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
 
 // ── TIMELINE ─────────────────────────────────────────────────────────────────
-let activeFilter = 'all', rangeFrom = '', rangeTo = '', ddOpen = false;
-
 function buildTimeline() {
   const bar = document.getElementById('timeline-bar');
   const ddActive = (activeFilter !== 'all' && activeFilter !== 'range');
-
   let ddLabel = 'Monthly';
   if (ddActive) {
     const parts = activeFilter.split('-');
     ddLabel = new Date(+parts[0], +parts[1] - 1, 1).toLocaleDateString('en-GB', {month:'short', year:'numeric'});
   }
-
-  // All month keys sorted most-recent first
   const allMks = [];
   const seen = {};
   sessions.forEach(function(s) {
@@ -361,16 +601,12 @@ function buildTimeline() {
     if (!seen[mk]) { seen[mk] = true; allMks.push(mk); }
   });
   allMks.sort().reverse();
-
-  // Group by year preserving most-recent-first order
   const yrOrder = [], yrMonths = {};
   allMks.forEach(function(mk) {
     const yr = mk.slice(0, 4);
     if (!yrMonths[yr]) { yrMonths[yr] = []; yrOrder.push(yr); }
     yrMonths[yr].push(mk);
   });
-
-  // Build dropdown HTML
   let ddHTML = '';
   yrOrder.forEach(function(yr, yi) {
     if (yi > 0) ddHTML += '<div class="dd-divider"></div>';
@@ -380,12 +616,10 @@ function buildTimeline() {
       ddHTML += '<div class="' + cls + '" onclick="setFilter(\'' + mk + '\')">' + monthLabel(mk) + '</div>';
     });
   });
-
-  const allCls  = 'tl-pill' + (activeFilter === 'all' ? ' active' : '');
-  const rngCls  = 'tl-pill' + (activeFilter === 'range' ? ' active' : '');
+  const allCls = 'tl-pill' + (activeFilter === 'all' ? ' active' : '');
+  const rngCls = 'tl-pill' + (activeFilter === 'range' ? ' active' : '');
   const trigCls = 'dropdown-trigger' + (ddActive ? ' active' : '') + (ddOpen ? ' open' : '');
   const menuCls = 'dropdown-menu' + (ddOpen ? ' show' : '');
-
   bar.innerHTML =
     '<button class="' + allCls + '" onclick="setFilter(\'all\')">All time</button>' +
     '<div class="dropdown-wrap" id="dd-wrap">' +
@@ -395,30 +629,20 @@ function buildTimeline() {
       '<div class="' + menuCls + '">' + ddHTML + '</div>' +
     '</div>' +
     '<button class="' + rngCls + '" onclick="setFilter(\'range\')">Custom range</button>';
-
   document.getElementById('range-picker').classList.toggle('show', activeFilter === 'range');
 }
-
 function toggleDropdown() {
-  ddOpen = !ddOpen;
-  buildTimeline();
-  if (ddOpen) {
-    setTimeout(function() {
-      document.addEventListener('click', closeDdOutside, {once: true});
-    }, 0);
-  }
+  ddOpen = !ddOpen; buildTimeline();
+  if (ddOpen) setTimeout(function() { document.addEventListener('click', closeDdOutside, {once:true}); }, 0);
 }
 function closeDdOutside(e) {
   const w = document.getElementById('dd-wrap');
   if (w && !w.contains(e.target)) { ddOpen = false; buildTimeline(); }
 }
-function setFilter(f) {
-  activeFilter = f; ddOpen = false; buildTimeline();
-  if (f !== 'range') renderDashboard();
-}
+function setFilter(f) { activeFilter = f; ddOpen = false; buildTimeline(); if (f !== 'range') renderDashboard(); }
 function applyRange() {
   rangeFrom = document.getElementById('range-from').value;
-  rangeTo   = document.getElementById('range-to').value;
+  rangeTo = document.getElementById('range-to').value;
   if (!rangeFrom || !rangeTo) { alert('Please select both dates.'); return; }
   renderDashboard();
 }
@@ -432,326 +656,178 @@ function filteredSessions() {
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
-let profitChart = null;
-
 function renderDashboard() {
   buildTimeline();
   const ss = filteredSessions().slice().sort(function(a,b) { return a.date.localeCompare(b.date); });
-  const total  = ss.reduce(function(s,x) { return s + x.amount; }, 0);
-  const wins   = ss.filter(function(x) { return x.amount > 0; }).length;
+  const total = ss.reduce(function(s,x) { return s + x.amount; }, 0);
+  const wins = ss.filter(function(x) { return x.amount > 0; }).length;
   const losses = ss.filter(function(x) { return x.amount < 0; }).length;
-  const n  = ss.length;
-  const wr = n ? (wins / n * 100).toFixed(2) : '0.00';
-  const avg = n ? total / n : 0;
-
+  const n = ss.length, wr = n ? (wins/n*100).toFixed(2) : '0.00', avg = n ? total/n : 0;
   document.getElementById('metrics').innerHTML =
-    '<div class="metric full"><div class="m-label">Total Profit</div>' +
-    '<div class="m-val ' + (total >= 0 ? 'pos' : 'neg') + '">' + idr(total, false) + '</div></div>' +
-    '<div class="metric"><div class="m-label">Win Rate</div>' +
-    '<div class="m-val big ' + (parseFloat(wr) >= 50 ? 'pos' : '') + '">' + wr + '%</div></div>' +
-    '<div class="metric"><div class="m-label">Sessions</div>' +
-    '<div class="m-val big">' + n + '</div>' +
-    '<div class="m-sub">' + wins + 'W · ' + losses + 'L</div></div>' +
-    '<div class="metric full"><div class="m-label">Avg per Session</div>' +
-    '<div class="m-val ' + (avg >= 0 ? 'pos' : 'neg') + '">' + idr(avg, true) + '</div></div>';
+    '<div class="metric full"><div class="m-label">Total Profit</div><div class="m-val ' + (total>=0?'pos':'neg') + '">' + idr(total,false) + '</div></div>' +
+    '<div class="metric"><div class="m-label">Win Rate</div><div class="m-val big ' + (parseFloat(wr)>=50?'pos':'') + '">' + wr + '%</div></div>' +
+    '<div class="metric"><div class="m-label">Sessions</div><div class="m-val big">' + n + '</div><div class="m-sub">' + wins + 'W · ' + losses + 'L</div></div>' +
+    '<div class="metric full"><div class="m-label">Avg per Session</div><div class="m-val ' + (avg>=0?'pos':'neg') + '">' + idr(avg,true) + '</div></div>';
 
-  // streak
   const allSorted = sessions.slice().sort(function(a,b) { return a.date.localeCompare(b.date); });
   let streak = 0, st = '';
   for (let i = allSorted.length - 1; i >= 0; i--) {
     const w = allSorted[i].amount > 0;
     if (!streak) { streak = 1; st = w ? 'win' : 'loss'; }
-    else if ((w && st === 'win') || (!w && st === 'loss')) streak++;
+    else if ((w && st==='win') || (!w && st==='loss')) streak++;
     else break;
   }
-  const dotColor = st === 'win' ? 'var(--green)' : 'var(--red)';
   document.getElementById('streak-el').innerHTML =
-    '<div class="streak"><div class="streak-dot" style="background:' + dotColor + '"></div>' +
+    '<div class="streak"><div class="streak-dot" style="background:' + (st==='win'?'var(--green)':'var(--red)') + '"></div>' +
     '<span>' + streak + ' session ' + st + ' streak</span></div>';
 
-  // chart
   const labels = [], data = [];
   let run = 0, lastMo = '';
   const singleMonth = (activeFilter !== 'all' && activeFilter !== 'range');
   ss.forEach(function(s) {
     run += s.amount;
-    if (singleMonth) {
-      labels.push(String(parseInt(s.date.slice(8, 10))));
-    } else {
-      const mo = s.date.slice(0, 7);
-      const lbl = new Date(mo + '-01T00:00:00').toLocaleDateString('en-GB', {month:'short', year:'2-digit'});
-      labels.push(mo !== lastMo ? lbl : '');
-      lastMo = mo;
-    }
+    if (singleMonth) { labels.push(String(parseInt(s.date.slice(8,10)))); }
+    else { const mo=s.date.slice(0,7); const lbl=new Date(mo+'-01T00:00:00').toLocaleDateString('en-GB',{month:'short',year:'2-digit'}); labels.push(mo!==lastMo?lbl:''); lastMo=mo; }
     data.push(run);
   });
-
-  const chartData = (singleMonth && data.length)
-    ? data.map(function(v) { return v - (data[0] - ss[0].amount); })
-    : data;
-
+  const chartData = (singleMonth && data.length) ? data.map(function(v){return v-(data[0]-ss[0].amount);}) : data;
   const ctx = document.getElementById('profit-chart').getContext('2d');
   if (profitChart) profitChart.destroy();
   profitChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: chartData,
-        borderColor: '#00995e', backgroundColor: 'rgba(0,153,94,0.07)',
-        borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: {display: false},
-        tooltip: {
-          callbacks: {
-            label: function(c) { return idr(c.raw, false); },
-            title: function() { return ''; }
-          },
-          backgroundColor: '#fff', bodyColor: '#111',
-          borderColor: 'rgba(0,0,0,0.1)', borderWidth: 1
-        }
-      },
-      scales: {
-        x: {
-          ticks: {
-            color: '#aaa', font: {size:9, family:'DM Mono'},
-            autoSkip: false, maxRotation: 45,
-            callback: function(v, i) { return this.getLabelForValue(i); }
-          },
-          grid: {display: false}
-        },
-        y: {
-          ticks: {color:'#aaa', font:{size:9, family:'DM Mono'}, callback: function(v) { return idrShort(v); }},
-          grid: {color: 'rgba(0,0,0,0.05)'}
-        }
+    type:'line',
+    data:{labels:labels,datasets:[{data:chartData,borderColor:'#00995e',backgroundColor:'rgba(0,153,94,0.07)',borderWidth:2,pointRadius:0,fill:true,tension:0.3}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return idr(c.raw,false);},title:function(){return '';}},backgroundColor:'#fff',bodyColor:'#111',borderColor:'rgba(0,0,0,0.1)',borderWidth:1}},
+      scales:{
+        x:{ticks:{color:'#aaa',font:{size:9,family:'DM Mono'},autoSkip:false,maxRotation:45,callback:function(v,i){return this.getLabelForValue(i);}},grid:{display:false}},
+        y:{ticks:{color:'#aaa',font:{size:9,family:'DM Mono'},callback:function(v){return idrShort(v);}},grid:{color:'rgba(0,0,0,0.05)'}}
       }
     }
   });
 }
 
-// ── HISTORY ─────────────────────────────────────────────────────────────────
-let selectMode = false;
-let selectedIds = new Set();
-
+// ── HISTORY ───────────────────────────────────────────────────────────────────
+function updateSelCount() {
+  const n = selectedIds.size;
+  document.getElementById('sel-count').textContent = n + ' selected';
+  const delBtn = document.getElementById('delete-selected-btn');
+  if (delBtn) delBtn.style.display = n > 0 ? '' : 'none';
+}
 function toggleSelectMode() {
-  selectMode = !selectMode;
-  selectedIds.clear();
+  selectMode = !selectMode; selectedIds.clear();
   const btn = document.getElementById('select-toggle-btn');
   const bar = document.getElementById('select-bar');
   const hint = document.getElementById('hist-hint');
   const list = document.getElementById('history-list');
   if (selectMode) {
-    btn.textContent = 'Cancel';
-    btn.classList.add('active-sel');
-    bar.classList.add('show');
-    hint.style.display = 'none';
-    list.classList.add('select-mode');
+    btn.textContent = 'Cancel'; btn.classList.add('active-sel');
+    bar.classList.add('show'); hint.style.display = 'none'; list.classList.add('select-mode');
   } else {
-    btn.textContent = 'Select';
-    btn.classList.remove('active-sel');
-    bar.classList.remove('show');
-    hint.style.display = '';
-    list.classList.remove('select-mode');
+    btn.textContent = 'Select'; btn.classList.remove('active-sel');
+    bar.classList.remove('show'); hint.style.display = ''; list.classList.remove('select-mode');
   }
-  updateSelCount();
-  renderHistory();
+  updateSelCount(); renderHistory();
 }
-
-function updateSelCount() {
-  const n = selectedIds.size;
-  document.getElementById('sel-count').textContent = n + ' selected';
-  const delBtn = document.getElementById('delete-selected-btn');
-  delBtn.style.display = n > 0 ? '' : 'none';
-}
-
 function toggleSelect(id) {
-  if (selectedIds.has(id)) selectedIds.delete(id);
-  else selectedIds.add(id);
+  if (selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
   updateSelCount();
-  // update checkbox visually
   const cb = document.querySelector('.cb[data-id="' + id + '"]');
   if (cb) cb.classList.toggle('checked', selectedIds.has(id));
 }
-
 function selectAll() {
   const ss = sessions.slice().sort(function(a,b){return b.date.localeCompare(a.date);});
-  if (selectedIds.size === ss.length) {
-    selectedIds.clear();
-  } else {
-    ss.forEach(function(s){ selectedIds.add(String(s.id)); });
-  }
+  if (selectedIds.size === ss.length) { selectedIds.clear(); }
+  else { ss.forEach(function(s){ selectedIds.add(s.id); }); }
   updateSelCount();
   document.querySelectorAll('.cb').forEach(function(cb) {
     cb.classList.toggle('checked', selectedIds.has(cb.dataset.id));
   });
 }
-
 function deleteSelected() {
   if (selectedIds.size === 0) return;
   const n = selectedIds.size;
-  if (!confirm('Delete ' + n + ' session' + (n > 1 ? 's' : '') + '? This cannot be undone.')) return;
-  sessions = sessions.filter(function(s){ return !selectedIds.has(String(s.id)); });
-  save(sessions);
-  selectedIds.clear();
-  updateSelCount();
-  renderHistory();
+  document.getElementById('modal-sub').textContent = 'Delete ' + n + ' selected session' + (n>1?'s':'') + '? This cannot be undone.';
+  pendingDeleteId = '__bulk__'; pendingDeleteEl = null;
+  document.getElementById('modal-overlay').classList.add('show');
 }
-
 function closeAllRows() {
-  document.querySelectorAll('.session.revealed').forEach(function(el) { el.classList.remove('revealed'); });
-  document.querySelectorAll('.session.selected').forEach(function(el) { el.classList.remove('selected'); });
+  document.querySelectorAll('.session.revealed').forEach(function(el){el.classList.remove('revealed');});
+  document.querySelectorAll('.session.selected').forEach(function(el){el.classList.remove('selected');});
 }
-
 function renderHistory() {
-  const ss = sessions.slice().sort(function(a,b) { return b.date.localeCompare(a.date); });
+  const ss = sessions.slice().sort(function(a,b){return b.date.localeCompare(a.date);});
   document.getElementById('hist-lbl').textContent = ss.length + ' sessions';
   const list = document.getElementById('history-list');
   list.innerHTML = '';
   if (selectMode) list.classList.add('select-mode');
-
   ss.forEach(function(s) {
-    const p = s.amount >= 0;
-    const dateStr = fmtDate(s.date);
-    const noteDisplay = s.note || '—';
-    const sid = String(s.id);
-
-    const wrap = document.createElement('div');
-    wrap.className = 'swipe-container';
-
-    // Red trash bg (hidden in select mode via CSS)
-    const delReveal = document.createElement('div');
-    delReveal.className = 'delete-reveal';
+    const p = s.amount >= 0, dateStr = fmtDate(s.date), noteDisplay = s.note || '—';
+    const sid = s.id;
+    const wrap = document.createElement('div'); wrap.className = 'swipe-container';
+    const delReveal = document.createElement('div'); delReveal.className = 'delete-reveal';
     delReveal.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
-
-    const sessionEl = document.createElement('div');
-    sessionEl.className = 'session';
+    const sessionEl = document.createElement('div'); sessionEl.className = 'session';
     const isChecked = selectedIds.has(sid);
     sessionEl.innerHTML =
-      '<div class="cb-wrap"><div class="cb' + (isChecked ? ' checked' : '') + '" data-id="' + sid + '"></div></div>' +
-      '<div class="s-bar ' + (p ? 'pos' : 'neg') + '"></div>' +
-      '<div class="s-info">' +
-        '<div class="s-date">' + dateStr + '</div>' +
-        '<div class="s-note">' + noteDisplay + '</div>' +
-      '</div>' +
-      '<div class="s-right">' +
-        '<div class="s-amt ' + (p ? 'pos' : 'neg') + '">' + idr(s.amount, false) + '</div>' +
-        '<div class="inline-trash">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d63030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>' +
-        '</div>' +
-      '</div>';
-
-    wrap.appendChild(delReveal);
-    wrap.appendChild(sessionEl);
-
+      '<div class="cb-wrap"><div class="cb' + (isChecked?' checked':'') + '" data-id="' + sid + '"></div></div>' +
+      '<div class="s-bar ' + (p?'pos':'neg') + '"></div>' +
+      '<div class="s-info"><div class="s-date">' + dateStr + '</div><div class="s-note">' + noteDisplay + '</div></div>' +
+      '<div class="s-right"><div class="s-amt ' + (p?'pos':'neg') + '">' + idr(s.amount,false) + '</div>' +
+      '<div class="inline-trash"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d63030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></div></div>';
+    wrap.appendChild(delReveal); wrap.appendChild(sessionEl);
     if (!selectMode) {
-      // swipe
       let startX = 0, dx = 0, dragging = false;
-      sessionEl.addEventListener('touchstart', function(e) { startX = e.touches[0].clientX; dx = 0; dragging = true; }, {passive:true});
-      sessionEl.addEventListener('touchmove', function(e) {
-        if (!dragging) return;
-        dx = e.touches[0].clientX - startX;
-        if (dx < 0) { sessionEl.style.transition = 'none'; sessionEl.style.transform = 'translateX(' + Math.max(dx,-72) + 'px)'; }
-      }, {passive:true});
-      sessionEl.addEventListener('touchend', function() {
-        dragging = false; sessionEl.style.transition = ''; sessionEl.style.transform = '';
-        if (dx < -30) { closeAllRows(); sessionEl.classList.add('revealed'); }
-        else { sessionEl.classList.remove('revealed'); }
-        dx = 0;
-      });
-      delReveal.addEventListener('click', function(e) {
-        e.stopPropagation();
-        openModal(s.id, sessionEl, s.note, dateStr);
-      });
-      sessionEl.addEventListener('click', function(e) {
-        if (e.target.closest('.inline-trash')) { e.stopPropagation(); openModal(s.id, sessionEl, s.note, dateStr); return; }
-        if (sessionEl.classList.contains('revealed')) { sessionEl.classList.remove('revealed'); return; }
-        const alreadySelected = sessionEl.classList.contains('selected');
-        closeAllRows();
-        if (!alreadySelected) sessionEl.classList.add('selected');
+      sessionEl.addEventListener('touchstart', function(e){startX=e.touches[0].clientX;dx=0;dragging=true;},{passive:true});
+      sessionEl.addEventListener('touchmove', function(e){if(!dragging)return;dx=e.touches[0].clientX-startX;if(dx<0){sessionEl.style.transition='none';sessionEl.style.transform='translateX('+Math.max(dx,-72)+'px)';}},{passive:true});
+      sessionEl.addEventListener('touchend', function(){dragging=false;sessionEl.style.transition='';sessionEl.style.transform='';if(dx<-30){closeAllRows();sessionEl.classList.add('revealed');}else{sessionEl.classList.remove('revealed');}dx=0;});
+      delReveal.addEventListener('click', function(e){e.stopPropagation();openModal(sid,sessionEl,s.note,dateStr);});
+      sessionEl.addEventListener('click', function(e){
+        if(e.target.closest('.inline-trash')){e.stopPropagation();openModal(sid,sessionEl,s.note,dateStr);return;}
+        if(sessionEl.classList.contains('revealed')){sessionEl.classList.remove('revealed');return;}
+        const already=sessionEl.classList.contains('selected');closeAllRows();if(!already)sessionEl.classList.add('selected');
       });
     } else {
-      // select mode — tap row or checkbox toggles selection
-      sessionEl.addEventListener('click', function(e) {
-        toggleSelect(sid);
-      });
+      sessionEl.addEventListener('click', function(){toggleSelect(sid);});
     }
-
     list.appendChild(wrap);
   });
 }
 
 // ── MONTHLY ───────────────────────────────────────────────────────────────────
-const mCharts = {};
 function renderMonthly() {
-  const ss = sessions.slice().sort(function(a,b) { return a.date.localeCompare(b.date); });
+  const ss = sessions.slice().sort(function(a,b){return a.date.localeCompare(b.date);});
   const months = {};
-  ss.forEach(function(s) {
-    const mk = monthKey(s.date);
-    if (!months[mk]) months[mk] = [];
-    months[mk].push(s);
-  });
+  ss.forEach(function(s){const mk=monthKey(s.date);if(!months[mk])months[mk]=[];months[mk].push(s);});
   const keys = Object.keys(months).sort().reverse();
-  const el = document.getElementById('monthly-list');
-  el.innerHTML = '';
-  keys.forEach(function(mk) {
-    const ms = months[mk];
-    const tot = ms.reduce(function(a,x) { return a + x.amount; }, 0);
-    const w = ms.filter(function(x) { return x.amount > 0; }).length;
-    const wr = (w / ms.length * 100).toFixed(2);
-    const parts = mk.split('-');
-    const name = new Date(+parts[0], +parts[1]-1, 1).toLocaleDateString('en-GB', {month:'long', year:'numeric'});
-    const pos = tot >= 0;
-    const block = document.createElement('div');
-    block.className = 'month-block';
-    block.innerHTML =
-      '<div class="month-hdr"><span class="month-name">' + name + '</span>' +
-      '<span class="month-total" style="color:' + (pos?'var(--green)':'var(--red)') + '">' + idr(tot,false) + '</span></div>' +
-      '<div class="month-meta">' + w + 'W · ' + (ms.length-w) + 'L · ' + wr + '% wr</div>' +
-      '<div class="month-chart"><canvas id="mc-' + mk + '"></canvas></div>' +
-      '<div style="height:1px;background:var(--border);margin-top:20px;"></div>';
+  const el = document.getElementById('monthly-list'); el.innerHTML = '';
+  keys.forEach(function(mk){
+    const ms=months[mk],tot=ms.reduce(function(a,x){return a+x.amount;},0),w=ms.filter(function(x){return x.amount>0;}).length;
+    const wr=(w/ms.length*100).toFixed(2),parts=mk.split('-');
+    const name=new Date(+parts[0],+parts[1]-1,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'}),pos=tot>=0;
+    const block=document.createElement('div');block.className='month-block';
+    block.innerHTML='<div class="month-hdr"><span class="month-name">'+name+'</span><span class="month-total" style="color:'+(pos?'var(--green)':'var(--red)')+'">'+idr(tot,false)+'</span></div><div class="month-meta">'+w+'W · '+(ms.length-w)+'L · '+wr+'% wr</div><div class="month-chart"><canvas id="mc-'+mk+'"></canvas></div><div style="height:1px;background:var(--border);margin-top:20px;"></div>';
     el.appendChild(block);
-    setTimeout(function() {
-      const c = document.getElementById('mc-' + mk);
-      if (!c) return;
-      if (mCharts[mk]) mCharts[mk].destroy();
-      const byDay = {};
-      ms.forEach(function(s) {
-        const d = parseInt(s.date.slice(8,10));
-        byDay[d] = (byDay[d] || 0) + s.amount;
-      });
-      const days = Object.keys(byDay).map(Number).sort(function(a,b){return a-b;});
-      mCharts[mk] = new Chart(c.getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels: days.map(String),
-          datasets: [{
-            data: days.map(function(d){return byDay[d];}),
-            backgroundColor: days.map(function(d){return byDay[d]>=0?'rgba(0,153,94,0.8)':'rgba(214,48,48,0.8)';}),
-            borderRadius: 3, borderSkipped: false
-          }]
-        },
-        options: {
-          responsive:true, maintainAspectRatio:false,
-          plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return idr(c.raw,false);},title:function(ts){return 'Day '+ts[0].label;}},backgroundColor:'#fff',bodyColor:'#111',borderColor:'rgba(0,0,0,0.1)',borderWidth:1}},
-          scales:{x:{ticks:{color:'#aaa',font:{size:9,family:'DM Mono'},maxRotation:0},grid:{display:false}},y:{ticks:{color:'#aaa',font:{size:9,family:'DM Mono'},callback:function(v){return idrShort(v);}},grid:{color:'rgba(0,0,0,0.05)'}}}
-        }
-      });
-    }, 0);
+    setTimeout(function(){
+      const c=document.getElementById('mc-'+mk);if(!c)return;
+      if(mCharts[mk])mCharts[mk].destroy();
+      const byDay={};ms.forEach(function(s){const d=parseInt(s.date.slice(8,10));byDay[d]=(byDay[d]||0)+s.amount;});
+      const days=Object.keys(byDay).map(Number).sort(function(a,b){return a-b;});
+      mCharts[mk]=new Chart(c.getContext('2d'),{type:'bar',data:{labels:days.map(String),datasets:[{data:days.map(function(d){return byDay[d];}),backgroundColor:days.map(function(d){return byDay[d]>=0?'rgba(0,153,94,0.8)':'rgba(214,48,48,0.8)';}),borderRadius:3,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return idr(c.raw,false);},title:function(ts){return 'Day '+ts[0].label;}},backgroundColor:'#fff',bodyColor:'#111',borderColor:'rgba(0,0,0,0.1)',borderWidth:1}},scales:{x:{ticks:{color:'#aaa',font:{size:9,family:'DM Mono'},maxRotation:0},grid:{display:false}},y:{ticks:{color:'#aaa',font:{size:9,family:'DM Mono'},callback:function(v){return idrShort(v);}},grid:{color:'rgba(0,0,0,0.05)'}}}}});
+    },0);
   });
 }
 
 // ── ADD ───────────────────────────────────────────────────────────────────────
-function addSession() {
-  const date   = document.getElementById('inp-date').value;
+async function addSession() {
+  const date = document.getElementById('inp-date').value;
   const amount = parseInt(document.getElementById('inp-amt').value, 10);
-  const note   = document.getElementById('inp-note').value.trim();
+  const note = document.getElementById('inp-note').value.trim();
   if (!date || isNaN(amount)) { alert('Please fill in date and amount.'); return; }
-  sessions.push({id: Date.now(), date: date, amount: amount, note: note});
-  save(sessions);
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  await insertSession(date, amount, note);
+  btn.disabled = false; btn.textContent = 'Save Session';
   document.getElementById('inp-amt').value = '';
   document.getElementById('inp-note').value = '';
   switchPage('dashboard');
@@ -759,23 +835,44 @@ function addSession() {
 
 // ── ROUTING ───────────────────────────────────────────────────────────────────
 function switchPage(name) {
-  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
-  document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
-  document.getElementById('page-' + name).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(function(b) {
-    if (b.getAttribute('onclick').indexOf("'" + name + "'") !== -1) b.classList.add('active');
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(function(b){
+    if(b.getAttribute('onclick').indexOf("'"+name+"'")!==-1) b.classList.add('active');
   });
-  if (name === 'dashboard') renderDashboard();
-  if (name === 'history') {
-    // reset select mode when navigating to history
-    if (selectMode) { selectMode = false; selectedIds.clear(); }
-    renderHistory();
-  }
-  if (name === 'monthly')   renderMonthly();
-  if (name === 'add')       document.getElementById('inp-date').value = new Date().toISOString().split('T')[0];
+  if(name==='dashboard') renderDashboard();
+  if(name==='history'){if(selectMode){selectMode=false;selectedIds.clear();}renderHistory();}
+  if(name==='monthly') renderMonthly();
+  if(name==='add') document.getElementById('inp-date').value=new Date().toISOString().split('T')[0];
 }
 
-renderDashboard();
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+async function boot() {
+  showScreen('loading');
+  // listen for auth changes
+  sb.auth.onAuthStateChange(async function(event, session) {
+    if (session && session.user) {
+      currentUser = session.user;
+      setUserUI(currentUser);
+      showScreen('loading');
+      document.getElementById('loading-screen').querySelector('.loading-txt').textContent = 'Loading your sessions...';
+      await loadSessions();
+      await seedIfEmpty();
+      showScreen('app');
+      renderDashboard();
+    } else {
+      currentUser = null;
+      sessions = [];
+      showScreen('auth');
+    }
+  });
+  // check existing session
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) showScreen('auth');
+}
+
+boot();
 </script>
 </body>
 </html>
