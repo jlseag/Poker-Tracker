@@ -490,15 +490,18 @@ function setSyncStatus(status) {
 }
 
 async function loadSessions() {
-  const { data, error } = await sb
-    .from('sessions')
-    .select('*')
-    .eq('user_email', currentUser.email)
-    .order('date', {ascending: false});
-  if (error) { console.error(error); return; }
-  sessions = (data || []).map(function(r) {
-    return { id: r.id, date: r.date, amount: r.amount, note: r.note || '' };
-  });
+  try {
+    const { data, error } = await sb
+      .from('sessions')
+      .select('id, date, amount, note')
+      .order('date', {ascending: false});
+    if (error) { console.error('loadSessions error:', error); return; }
+    sessions = (data || []).map(function(r) {
+      return { id: r.id, date: r.date, amount: r.amount, note: r.note || '' };
+    });
+  } catch(e) {
+    console.error('loadSessions exception:', e);
+  }
 }
 
 async function seedIfEmpty() {
@@ -509,7 +512,6 @@ async function seedIfEmpty() {
   const { data: check, error: checkErr } = await sb
     .from('sessions')
     .select('id')
-    .eq('user_email', currentUser.email)
     .limit(1);
   if (checkErr) { console.error('Check error:', checkErr); return; }
   if (check && check.length > 0) return; // rows exist, do not seed
