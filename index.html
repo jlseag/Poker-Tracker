@@ -384,54 +384,72 @@ async function initApp(user, token){
 }
 
 async function boot(){
-  showScreen('loading');setLoadingText('Loading...');
+  showScreen('loading');setLoadingText('Checking login...');
 
-  // Check for OAuth callback (hash fragment from Supabase redirect)
-  const hash=window.location.hash;
-  if(hash&&hash.includes('access_token')){
-    const params=new URLSearchParams(hash.replace('#',''));
-    const token=params.get('access_token');
-    const refresh=params.get('refresh_token');
-    if(token){
-      // Get user info
-      const res=await sbFetch('/auth/v1/user',{headers:{'Authorization':'Bearer '+token}});
+  try {
+    // Check for OAuth callback (hash fragment from Supabase redirect)
+    const hash=window.location.hash;
+    setLoadingText('Step 1: hash='+(hash?'yes':'no'));
+
+    if(hash&&hash.includes('access_token')){
+      setLoadingText('Found token in URL...');
+      const params=new URLSearchParams(hash.replace('#',''));
+      const token=params.get('access_token');
+      const refresh=params.get('refresh_token');
+      if(token){
+        setLoadingText('Verifying token...');
+        const res=await fetch(SB_URL+'/auth/v1/user',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+token}});
+        setLoadingText('Token check: '+res.status);
+        if(res.ok){
+          const user=await res.json();
+          saveSession({access_token:token,refresh_token:refresh,user:user});
+          history.replaceState(null,'',window.location.pathname);
+          await initApp(user,token);
+          return;
+        }
+      }
+    }
+
+    // Check saved session
+    setLoadingText('Checking saved session...');
+    const saved=getSavedSession();
+    setLoadingText('Saved session: '+(saved?'found':'none'));
+
+    if(saved&&saved.access_token){
+      setLoadingText('Verifying saved token...');
+      const res=await fetch(SB_URL+'/auth/v1/user',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+saved.access_token}});
+      setLoadingText('Saved token check: '+res.status);
       if(res.ok){
         const user=await res.json();
-        saveSession({access_token:token,refresh_token:refresh,user:user});
-        // Clean URL
-        history.replaceState(null,'',window.location.pathname);
-        await initApp(user,token);
+        await initApp(user,saved.access_token);
         return;
       }
-    }
-  }
-
-  // Check saved session
-  const saved=getSavedSession();
-  if(saved&&saved.access_token){
-    // Verify token still valid
-    const res=await sbFetch('/auth/v1/user',{headers:{'Authorization':'Bearer '+saved.access_token}});
-    if(res.ok){
-      const user=await res.json();
-      await initApp(user,saved.access_token);
-      return;
-    }
-    // Try refresh
-    if(saved.refresh_token){
-      const rRes=await sbFetch('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:JSON.stringify({refresh_token:saved.refresh_token})});
-      if(rRes.ok){
-        const newSess=await rRes.json();
-        saveSession(newSess);
-        await initApp(newSess.user,newSess.access_token);
-        return;
+      if(saved.refresh_token){
+        setLoadingText('Refreshing token...');
+        const rRes=await fetch(SB_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:saved.refresh_token})});
+        setLoadingText('Refresh: '+rRes.status);
+        if(rRes.ok){
+          const newSess=await rRes.json();
+          saveSession(newSess);
+          await initApp(newSess.user,newSess.access_token);
+          return;
+        }
       }
+      localStorage.removeItem('sb_session');
     }
-    localStorage.removeItem('sb_session');
-  }
 
-  // Set Google sign-in link and show auth
-  document.getElementById('google-signin-btn').href=buildGoogleOAuthURL();
-  showScreen('auth');
+    setLoadingText('No session — showing login...');
+    document.getElementById('google-signin-btn').href=buildGoogleOAuthURL();
+    showScreen('auth');
+
+  } catch(err) {
+    setLoadingText('ERROR: '+err.message);
+    console.error('Boot error:', err);
+    setTimeout(function(){
+      document.getElementById('google-signin-btn').href=buildGoogleOAuthURL();
+      showScreen('auth');
+    }, 3000);
+  }
 }
 
 // ── MODAL ─────────────────────────────────────────────────────────────────────
