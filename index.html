@@ -192,6 +192,11 @@
         </div>
         <div class="user-menu" id="user-menu">
           <div class="um-email" id="user-email-display"></div>
+          <div id="um-other-accounts"></div>
+          <div class="um-item" onclick="addAccount()" style="border-top:1px solid var(--border);margin-top:4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            Add / switch account
+          </div>
           <div class="um-item danger" onclick="signOut()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             Sign out
@@ -302,7 +307,11 @@ function setLoadingText(t){document.getElementById('loading-txt').textContent=t;
 async function sbFetch(path, opts){
   const headers={'apikey':SB_KEY,'Content-Type':'application/json'};
   if(accessToken) headers['Authorization']='Bearer '+accessToken;
-  const res = await fetch(SB_URL+path, Object.assign({headers}, opts||{}));
+  const extra = (opts&&opts.extraHeaders)||{};
+  Object.assign(headers, extra);
+  const fetchOpts = Object.assign({}, opts||{}, {headers:headers});
+  delete fetchOpts.extraHeaders;
+  const res = await fetch(SB_URL+path, fetchOpts);
   return res;
 }
 
@@ -325,7 +334,7 @@ async function seedIfEmpty(){
 }
 
 async function insertSession(date,amount,note){
-  const res=await sbFetch('/rest/v1/sessions',{method:'POST',body:JSON.stringify([{user_email:currentUser.email,date:date,amount:amount,note:note}]),headers:{'Prefer':'return=representation'}});
+  const res=await sbFetch('/rest/v1/sessions',{method:'POST',body:JSON.stringify([{user_email:currentUser.email,date:date,amount:amount,note:note}]),extraHeaders:{'Prefer':'return=representation'}});
   if(!res.ok){alert('Save failed: '+(await res.text()));return null;}
   const data=await res.json();
   return data[0];
@@ -356,6 +365,43 @@ function setUserUI(user){
   document.getElementById('user-email-display').textContent=email;
   const av=document.getElementById('user-avatar');
   if(avatar){av.innerHTML='<img src="'+avatar+'" alt="avatar"/>';}else{av.textContent=name.charAt(0).toUpperCase();}
+  // Populate other saved accounts
+  const all=getAllSessions();
+  const others=Object.keys(all).filter(function(e){return e!==email;});
+  const otherEl=document.getElementById('um-other-accounts');
+  if(otherEl){
+    otherEl.innerHTML="";
+    others.forEach(function(e){
+      var n=e.split("@")[0];
+      var d=document.createElement("div");
+      d.className="um-item";d.style.color="var(--green)";
+      d.textContent=n;
+      d.onclick=function(){switchToAccount(e);};
+      otherEl.appendChild(d);
+    });
+  }
+}
+
+async function switchToAccount(email){
+  toggleUserMenu();
+  const sess=getSavedSessionByEmail(email);
+  if(!sess){addAccount();return;}
+  // verify token
+  const res=await fetch(SB_URL+'/auth/v1/user',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+sess.access_token}});
+  if(res.ok){
+    const user=await res.json();
+    localStorage.setItem('sb_last_email',email);
+    await initApp(user,sess.access_token);
+  } else {
+    // token expired, need fresh login
+    removeSavedSession(email);
+    addAccount();
+  }
+}
+
+function addAccount(){
+  toggleUserMenu();
+  window.location.href=buildGoogleOAuthURL();
 }
 
 function toggleUserMenu(){
@@ -366,13 +412,44 @@ function toggleUserMenu(){
 
 async function signOut(){
   if(accessToken){await sbFetch('/auth/v1/logout',{method:'POST'});}
+  const email = currentUser ? currentUser.email : null;
+  if(email) removeSavedSession(email);
+  localStorage.removeItem('sb_last_email');
   accessToken=null;currentUser=null;sessions=[];
-  localStorage.removeItem('sb_session');
-  toggleUserMenu();showScreen('auth');
+  toggleUserMenu();
+  // If other accounts saved, show auth with option to switch
+  document.getElementById('google-signin-btn').href=buildGoogleOAuthURL();
+  showScreen('auth');
 }
 
-function saveSession(sess){try{localStorage.setItem('sb_session',JSON.stringify(sess));}catch(e){}}
-function getSavedSession(){try{const s=localStorage.getItem('sb_session');return s?JSON.parse(s):null;}catch(e){return null;}}
+function saveSession(sess){
+  try{
+    // Store indexed by email
+    const email = sess.user && sess.user.email ? sess.user.email : 'default';
+    const all = getAllSessions();
+    all[email] = sess;
+    localStorage.setItem('sb_sessions', JSON.stringify(all));
+    localStorage.setItem('sb_last_email', email);
+  }catch(e){}
+}
+function getAllSessions(){
+  try{const s=localStorage.getItem('sb_sessions');return s?JSON.parse(s):{};} catch(e){return {};}
+}
+function getSavedSession(){
+  try{
+    const all = getAllSessions();
+    const lastEmail = localStorage.getItem('sb_last_email');
+    if(lastEmail && all[lastEmail]) return all[lastEmail];
+    const keys = Object.keys(all);
+    return keys.length > 0 ? all[keys[0]] : null;
+  }catch(e){return null;}
+}
+function getSavedSessionByEmail(email){
+  try{const all=getAllSessions();return all[email]||null;}catch(e){return null;}
+}
+function removeSavedSession(email){
+  try{const all=getAllSessions();delete all[email];localStorage.setItem('sb_sessions',JSON.stringify(all));}catch(e){}
+}
 
 async function initApp(user, token){
   currentUser=user;accessToken=token;
