@@ -498,8 +498,14 @@ async function loadSessions() {
 
 async function seedIfEmpty() {
   if (currentUser.email !== 'jlseagull715@gmail.com') return;
-  if (sessions.length > 0) return;
-  // insert all seed data
+  // Check directly from DB how many rows exist for this user
+  const { count, error: countErr } = await sb
+    .from('sessions')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_email', currentUser.email);
+  if (countErr) { console.error('Count error:', countErr); return; }
+  if (count > 0) return; // already seeded — never seed again
+  // insert seed data one time only
   const rows = SEED.map(function(s) {
     return { user_email: currentUser.email, date: s.date, amount: s.amount, note: s.note };
   });
