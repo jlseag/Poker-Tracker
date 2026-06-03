@@ -259,7 +259,14 @@
       </div>
       <div class="form-section">
         <label class="f-label">Notes (optional)</label>
-        <textarea id="inp-note" class="f-input" placeholder="e.g. straight flush vs Anya"></textarea>
+        <textarea id="inp-note" class="f-input" placeholder="e.g. the infamous pocket 88 scandal"></textarea>
+      <script>
+        (function(){
+          var hints=["e.g. the infamous pocket 88 scandal","e.g. I didn\'t cheat, I just changed my cards","e.g. the only thing stopping me is god at this point"];
+          var el=document.getElementById('inp-note');
+          if(el) el.placeholder=hints[Math.floor(Math.random()*hints.length)];
+        })();
+      </script>
       </div>
       <button class="save-btn" id="save-btn" onclick="addSession()">Save Session</button>
       <div style="text-align:center;font-family:var(--font-m);font-size:11px;color:var(--muted);margin-top:16px;" id="sync-status">Synced to cloud</div>
@@ -683,7 +690,12 @@ function switchPage(name){
   if(name==='dashboard')renderDashboard();
   if(name==='history'){if(selectMode){selectMode=false;selectedIds.clear();}renderHistory();}
   if(name==='monthly')renderMonthly();
-  if(name==='add')document.getElementById('inp-date').value=new Date().toISOString().split('T')[0];
+  if(name==='add'){
+    document.getElementById('inp-date').value=new Date().toISOString().split('T')[0];
+    var hints=["e.g. the infamous pocket 88 scandal","e.g. I didn't cheat, I just changed my cards","e.g. the only thing stopping me is god at this point"];
+    var noteEl=document.getElementById('inp-note');
+    if(noteEl) noteEl.placeholder=hints[Math.floor(Math.random()*hints.length)];
+  }
 }
 
 boot();
