@@ -119,6 +119,25 @@
   .f-hint{font-family:var(--font-m);font-size:10px;color:var(--muted);margin-top:6px;}
   .save-btn{width:100%;padding:16px;background:var(--acc-bg);color:var(--acc-txt);border:none;border-radius:12px;font-family:var(--font-d);font-size:16px;font-weight:800;cursor:pointer;margin-top:8px;}
   .save-btn:active{opacity:.8;}
+
+  /* SELECT MODE */
+  .select-bar{display:none;align-items:center;justify-content:space-between;padding:10px 0 14px;}
+  .select-bar.show{display:flex;}
+  .select-actions{display:flex;align-items:center;gap:10px;}
+  .sel-btn{padding:7px 14px;font-family:var(--font-m);font-size:11px;border:1px solid var(--border);background:var(--bg2);color:var(--text);border-radius:20px;cursor:pointer;box-shadow:var(--shadow);}
+  .sel-btn.danger{background:var(--red);color:#fff;border-color:var(--red);}
+  .sel-btn.active-sel{background:var(--acc-bg);color:var(--acc-txt);border-color:var(--acc-bg);}
+  .sel-count{font-family:var(--font-m);font-size:11px;color:var(--muted);}
+  /* CHECKBOX */
+  .cb-wrap{display:none;align-items:center;justify-content:center;width:22px;flex-shrink:0;}
+  .select-mode .cb-wrap{display:flex;}
+  .select-mode .delete-reveal{display:none;}
+  .cb{width:18px;height:18px;border:2px solid var(--dim,#ccc);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,border-color .15s;}
+  .cb.checked{background:var(--green);border-color:var(--green);}
+  .cb.checked::after{content:'';display:block;width:5px;height:9px;border:2px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px);}
+  /* hide swipe/tap-select in select mode */
+  .select-mode .session{cursor:default;}
+
 </style>
 </head>
 <body>
@@ -167,8 +186,18 @@
   </div>
 
   <div id="page-history" class="page">
-    <div class="section-lbl" id="hist-lbl"></div>
-    <div class="hint-txt">Swipe left or tap a session to reveal the delete option</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div class="section-lbl" id="hist-lbl"></div>
+      <button class="sel-btn" id="select-toggle-btn" onclick="toggleSelectMode()">Select</button>
+    </div>
+    <div class="select-bar" id="select-bar">
+      <div class="select-actions">
+        <button class="sel-btn" onclick="selectAll()">Select all</button>
+        <span class="sel-count" id="sel-count">0 selected</span>
+      </div>
+      <button class="sel-btn danger" id="delete-selected-btn" onclick="deleteSelected()" style="display:none;">Delete</button>
+    </div>
+    <div class="hint-txt" id="hist-hint">Swipe left or tap a session to reveal the delete option</div>
     <div id="history-list"></div>
   </div>
 
@@ -504,7 +533,74 @@ function renderDashboard() {
   });
 }
 
-// ── HISTORY ───────────────────────────────────────────────────────────────────
+// ── HISTORY ─────────────────────────────────────────────────────────────────
+let selectMode = false;
+let selectedIds = new Set();
+
+function toggleSelectMode() {
+  selectMode = !selectMode;
+  selectedIds.clear();
+  const btn = document.getElementById('select-toggle-btn');
+  const bar = document.getElementById('select-bar');
+  const hint = document.getElementById('hist-hint');
+  const list = document.getElementById('history-list');
+  if (selectMode) {
+    btn.textContent = 'Cancel';
+    btn.classList.add('active-sel');
+    bar.classList.add('show');
+    hint.style.display = 'none';
+    list.classList.add('select-mode');
+  } else {
+    btn.textContent = 'Select';
+    btn.classList.remove('active-sel');
+    bar.classList.remove('show');
+    hint.style.display = '';
+    list.classList.remove('select-mode');
+  }
+  updateSelCount();
+  renderHistory();
+}
+
+function updateSelCount() {
+  const n = selectedIds.size;
+  document.getElementById('sel-count').textContent = n + ' selected';
+  const delBtn = document.getElementById('delete-selected-btn');
+  delBtn.style.display = n > 0 ? '' : 'none';
+}
+
+function toggleSelect(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  updateSelCount();
+  // update checkbox visually
+  const cb = document.querySelector('.cb[data-id="' + id + '"]');
+  if (cb) cb.classList.toggle('checked', selectedIds.has(id));
+}
+
+function selectAll() {
+  const ss = sessions.slice().sort(function(a,b){return b.date.localeCompare(a.date);});
+  if (selectedIds.size === ss.length) {
+    selectedIds.clear();
+  } else {
+    ss.forEach(function(s){ selectedIds.add(String(s.id)); });
+  }
+  updateSelCount();
+  document.querySelectorAll('.cb').forEach(function(cb) {
+    cb.classList.toggle('checked', selectedIds.has(cb.dataset.id));
+  });
+}
+
+function deleteSelected() {
+  if (selectedIds.size === 0) return;
+  const n = selectedIds.size;
+  if (!confirm('Delete ' + n + ' session' + (n > 1 ? 's' : '') + '? This cannot be undone.')) return;
+  sessions = sessions.filter(function(s){ return !selectedIds.has(String(s.id)); });
+  save(sessions);
+  selectedIds.clear();
+  updateSelCount();
+  renderHistory();
+}
+
 function closeAllRows() {
   document.querySelectorAll('.session.revealed').forEach(function(el) { el.classList.remove('revealed'); });
   document.querySelectorAll('.session.selected').forEach(function(el) { el.classList.remove('selected'); });
@@ -515,22 +611,27 @@ function renderHistory() {
   document.getElementById('hist-lbl').textContent = ss.length + ' sessions';
   const list = document.getElementById('history-list');
   list.innerHTML = '';
+  if (selectMode) list.classList.add('select-mode');
 
   ss.forEach(function(s) {
     const p = s.amount >= 0;
     const dateStr = fmtDate(s.date);
     const noteDisplay = s.note || '—';
+    const sid = String(s.id);
 
     const wrap = document.createElement('div');
     wrap.className = 'swipe-container';
 
+    // Red trash bg (hidden in select mode via CSS)
     const delReveal = document.createElement('div');
     delReveal.className = 'delete-reveal';
     delReveal.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
 
     const sessionEl = document.createElement('div');
     sessionEl.className = 'session';
+    const isChecked = selectedIds.has(sid);
     sessionEl.innerHTML =
+      '<div class="cb-wrap"><div class="cb' + (isChecked ? ' checked' : '') + '" data-id="' + sid + '"></div></div>' +
       '<div class="s-bar ' + (p ? 'pos' : 'neg') + '"></div>' +
       '<div class="s-info">' +
         '<div class="s-date">' + dateStr + '</div>' +
@@ -546,41 +647,38 @@ function renderHistory() {
     wrap.appendChild(delReveal);
     wrap.appendChild(sessionEl);
 
-    // swipe
-    let startX = 0, dx = 0, dragging = false;
-    sessionEl.addEventListener('touchstart', function(e) { startX = e.touches[0].clientX; dx = 0; dragging = true; }, {passive:true});
-    sessionEl.addEventListener('touchmove', function(e) {
-      if (!dragging) return;
-      dx = e.touches[0].clientX - startX;
-      if (dx < 0) { sessionEl.style.transition = 'none'; sessionEl.style.transform = 'translateX(' + Math.max(dx,-72) + 'px)'; }
-    }, {passive:true});
-    sessionEl.addEventListener('touchend', function() {
-      dragging = false;
-      sessionEl.style.transition = '';
-      sessionEl.style.transform = '';
-      if (dx < -30) { closeAllRows(); sessionEl.classList.add('revealed'); }
-      else { sessionEl.classList.remove('revealed'); }
-      dx = 0;
-    });
-
-    // tap delete reveal
-    delReveal.addEventListener('click', function(e) {
-      e.stopPropagation();
-      openModal(s.id, sessionEl, s.note, dateStr);
-    });
-
-    // tap session
-    sessionEl.addEventListener('click', function(e) {
-      if (e.target.closest('.inline-trash')) {
+    if (!selectMode) {
+      // swipe
+      let startX = 0, dx = 0, dragging = false;
+      sessionEl.addEventListener('touchstart', function(e) { startX = e.touches[0].clientX; dx = 0; dragging = true; }, {passive:true});
+      sessionEl.addEventListener('touchmove', function(e) {
+        if (!dragging) return;
+        dx = e.touches[0].clientX - startX;
+        if (dx < 0) { sessionEl.style.transition = 'none'; sessionEl.style.transform = 'translateX(' + Math.max(dx,-72) + 'px)'; }
+      }, {passive:true});
+      sessionEl.addEventListener('touchend', function() {
+        dragging = false; sessionEl.style.transition = ''; sessionEl.style.transform = '';
+        if (dx < -30) { closeAllRows(); sessionEl.classList.add('revealed'); }
+        else { sessionEl.classList.remove('revealed'); }
+        dx = 0;
+      });
+      delReveal.addEventListener('click', function(e) {
         e.stopPropagation();
         openModal(s.id, sessionEl, s.note, dateStr);
-        return;
-      }
-      if (sessionEl.classList.contains('revealed')) { sessionEl.classList.remove('revealed'); return; }
-      const alreadySelected = sessionEl.classList.contains('selected');
-      closeAllRows();
-      if (!alreadySelected) sessionEl.classList.add('selected');
-    });
+      });
+      sessionEl.addEventListener('click', function(e) {
+        if (e.target.closest('.inline-trash')) { e.stopPropagation(); openModal(s.id, sessionEl, s.note, dateStr); return; }
+        if (sessionEl.classList.contains('revealed')) { sessionEl.classList.remove('revealed'); return; }
+        const alreadySelected = sessionEl.classList.contains('selected');
+        closeAllRows();
+        if (!alreadySelected) sessionEl.classList.add('selected');
+      });
+    } else {
+      // select mode — tap row or checkbox toggles selection
+      sessionEl.addEventListener('click', function(e) {
+        toggleSelect(sid);
+      });
+    }
 
     list.appendChild(wrap);
   });
@@ -668,7 +766,11 @@ function switchPage(name) {
     if (b.getAttribute('onclick').indexOf("'" + name + "'") !== -1) b.classList.add('active');
   });
   if (name === 'dashboard') renderDashboard();
-  if (name === 'history')   renderHistory();
+  if (name === 'history') {
+    // reset select mode when navigating to history
+    if (selectMode) { selectMode = false; selectedIds.clear(); }
+    renderHistory();
+  }
   if (name === 'monthly')   renderMonthly();
   if (name === 'add')       document.getElementById('inp-date').value = new Date().toISOString().split('T')[0];
 }
