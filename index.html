@@ -420,7 +420,12 @@ function showScreen(name) {
 async function signInWithGoogle() {
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.href }
+    options: {
+      redirectTo: 'https://jlseag.github.io/Poker-Tracker',
+      queryParams: {
+        prompt: 'select_account'
+      }
+    }
   });
   if (error) alert('Sign in failed: ' + error.message);
 }
