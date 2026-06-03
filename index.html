@@ -498,14 +498,17 @@ async function loadSessions() {
 
 async function seedIfEmpty() {
   if (currentUser.email !== 'jlseagull715@gmail.com') return;
-  // Check directly from DB how many rows exist for this user
-  const { count, error: countErr } = await sb
+  // sessions is already loaded at this point — if any exist, skip seeding
+  if (sessions.length > 0) return;
+  // Double-check with a lightweight DB query
+  const { data: check, error: checkErr } = await sb
     .from('sessions')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_email', currentUser.email);
-  if (countErr) { console.error('Count error:', countErr); return; }
-  if (count > 0) return; // already seeded — never seed again
-  // insert seed data one time only
+    .select('id')
+    .eq('user_email', currentUser.email)
+    .limit(1);
+  if (checkErr) { console.error('Check error:', checkErr); return; }
+  if (check && check.length > 0) return; // rows exist, do not seed
+  // Safe to seed — no rows found
   const rows = SEED.map(function(s) {
     return { user_email: currentUser.email, date: s.date, amount: s.amount, note: s.note };
   });
@@ -854,28 +857,44 @@ function switchPage(name) {
 }
 
 // ── BOOT ──────────────────────────────────────────────────────────────────────
+async function initApp(user) {
+  currentUser = user;
+  setUserUI(currentUser);
+  showScreen('loading');
+  document.getElementById('loading-screen').querySelector('.loading-txt').textContent = 'Loading your sessions...';
+  try {
+    await loadSessions();
+    await seedIfEmpty();
+  } catch(e) {
+    console.error('Load error:', e);
+  }
+  showScreen('app');
+  renderDashboard();
+}
+
 async function boot() {
   showScreen('loading');
-  // listen for auth changes
-  sb.auth.onAuthStateChange(async function(event, session) {
-    if (session && session.user) {
-      currentUser = session.user;
-      setUserUI(currentUser);
-      showScreen('loading');
-      document.getElementById('loading-screen').querySelector('.loading-txt').textContent = 'Loading your sessions...';
-      await loadSessions();
-      await seedIfEmpty();
-      showScreen('app');
-      renderDashboard();
-    } else {
+
+  // First check for existing session immediately
+  const { data: { session }, error } = await sb.auth.getSession();
+  if (session && session.user) {
+    await initApp(session.user);
+  } else {
+    showScreen('auth');
+  }
+
+  // Also listen for future auth changes (login/logout)
+  sb.auth.onAuthStateChange(async function(event, sess) {
+    if (event === 'SIGNED_IN' && sess && sess.user) {
+      if (!currentUser) {
+        await initApp(sess.user);
+      }
+    } else if (event === 'SIGNED_OUT') {
       currentUser = null;
       sessions = [];
       showScreen('auth');
     }
   });
-  // check existing session
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) showScreen('auth');
 }
 
 boot();
