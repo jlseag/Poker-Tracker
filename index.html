@@ -926,22 +926,26 @@ function handleImport(event) {
         let dateStr = '';
         const rawDate = row[0];
         if (rawDate instanceof Date) {
-          dateStr = rawDate.toISOString().split('T')[0];
+          // Use local date parts to avoid timezone shift
+          const y = rawDate.getFullYear();
+          const m = String(rawDate.getMonth()+1).padStart(2,'0');
+          const d = String(rawDate.getDate()).padStart(2,'0');
+          dateStr = y+'-'+m+'-'+d;
         } else if (typeof rawDate === 'number') {
-          // Excel serial number
-          const d = new Date(Math.round((rawDate - 25569) * 86400 * 1000));
-          dateStr = d.toISOString().split('T')[0];
+          // Excel serial number — use UTC to avoid timezone shift
+          const totalMs = Math.round((rawDate - 25569) * 86400 * 1000);
+          const dt = new Date(totalMs);
+          const y = dt.getUTCFullYear();
+          const m = String(dt.getUTCMonth()+1).padStart(2,'0');
+          const d = String(dt.getUTCDate()).padStart(2,'0');
+          dateStr = y+'-'+m+'-'+d;
         } else {
           const s = String(rawDate).trim();
-          // Try DD/MM/YYYY or D/M/YYYY
+          // Try DD/MM/YYYY
           const dmyMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
           if (dmyMatch) {
-            const dd = dmyMatch[1].padStart(2,'0');
-            const mm = dmyMatch[2].padStart(2,'0');
-            const yyyy = dmyMatch[3];
-            dateStr = yyyy + '-' + mm + '-' + dd;
+            dateStr = dmyMatch[3]+'-'+dmyMatch[2].padStart(2,'0')+'-'+dmyMatch[1].padStart(2,'0');
           } else {
-            // Try MM/DD/YYYY or YYYY-MM-DD
             const parsed = new Date(s);
             if (!isNaN(parsed)) dateStr = parsed.toISOString().split('T')[0];
           }
@@ -949,23 +953,46 @@ function handleImport(event) {
         if (!dateStr) continue;
 
         // ── Parse amount ──
-        // Handle formats like "Rp30.000", "-Rp200.000", "Rp1.200.000"
+        // Handles: "Rp30.000", "-Rp200.000", "Rp1,030.000", "Rp1.200.000"
         let rawAmt = String(row[1]).trim();
-        // Remove currency prefix and spaces
-        rawAmt = rawAmt.replace(/Rp/gi, '').replace(/\s/g, '');
-        // Detect if dots are thousand separators (e.g. "30.000" = 30000)
-        // If ends with exactly 3 digits after last dot, treat dots as thousand separators
-        const dotParts = rawAmt.replace('-','').split('.');
-        const allThousands = dotParts.length > 1 && dotParts.slice(1).every(function(p){ return p.length === 3; });
-        if (allThousands) {
-          rawAmt = rawAmt.replace(/\./g, '');
+        // Strip currency prefix (Rp, rp, RP)
+        rawAmt = rawAmt.replace(/[Rr][Pp]/g, '').replace(/\s/g, '');
+        // Keep leading minus
+        const isNeg = rawAmt.startsWith('-');
+        rawAmt = rawAmt.replace('-','');
+
+        // Detect format:
+        // Case A: comma as thousands sep, dot as decimal — e.g. "1,030.000" or "1,030"
+        // Case B: dot as thousands sep — e.g. "30.000" or "1.200.000"
+        // Case C: plain number
+
+        let numVal = 0;
+        if (rawAmt.includes(',') && rawAmt.includes('.')) {
+          // Both comma and dot are thousands separators — e.g. "1,030.000" = 1,030,000
+          numVal = parseFloat(rawAmt.replace(/,/g,'').replace(/\./g,''));
+        } else if (rawAmt.includes(',') && !rawAmt.includes('.')) {
+          // Comma only — could be thousands: "1,030" = 1030
+          const commaParts = rawAmt.split(',');
+          if (commaParts.length === 2 && commaParts[1].length === 3) {
+            numVal = parseFloat(rawAmt.replace(',',''));
+          } else {
+            numVal = parseFloat(rawAmt.replace(',','.'));
+          }
+        } else if (rawAmt.includes('.')) {
+          // Dot only — check if thousands separator
+          const dotParts = rawAmt.split('.');
+          const allThree = dotParts.length > 1 && dotParts.slice(1).every(function(p){ return p.length === 3; });
+          if (allThree) {
+            numVal = parseFloat(rawAmt.replace(/\./g,''));
+          } else {
+            numVal = parseFloat(rawAmt);
+          }
+        } else {
+          numVal = parseFloat(rawAmt);
         }
-        // Replace comma decimals
-        rawAmt = rawAmt.replace(',', '.');
-        const fullAmount = parseFloat(rawAmt);
-        if (isNaN(fullAmount)) continue;
-        // Store as full rupiah
-        const amount = Math.round(fullAmount);
+
+        if (isNaN(numVal)) continue;
+        const amount = Math.round(isNeg ? -numVal : numVal);
 
         const note = row[2] ? String(row[2]).trim() : '';
         importRows.push({ date: dateStr, amount: amount, note: note });
