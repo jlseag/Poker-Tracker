@@ -710,13 +710,13 @@ function renderDashboard(){
   buildTimeline();
   const ss=filteredSessions().slice().sort(function(a,b){return a.date.localeCompare(b.date);});
   const total=ss.reduce(function(s,x){return s+x.amount;},0);
-  const wins=ss.filter(function(x){return x.amount>0;}).length;
+  const wins=ss.filter(function(x){return x.amount>=0;}).length;
   const losses=ss.filter(function(x){return x.amount<0;}).length;
   const n=ss.length,wr=n?(wins/n*100).toFixed(2):'0.00',avg=n?total/n:0;
   document.getElementById('metrics').innerHTML='<div class="metric full"><div class="m-label">Total Profit</div><div class="m-val '+(total>=0?'pos':'neg')+'">'+idr(total,false)+'</div></div><div class="metric"><div class="m-label">Win Rate</div><div class="m-val big '+(parseFloat(wr)>=50?'pos':'')+'">'+wr+'%</div></div><div class="metric"><div class="m-label">Sessions</div><div class="m-val big">'+n+'</div><div class="m-sub">'+wins+'W · '+losses+'L</div></div><div class="metric full"><div class="m-label">Avg per Session</div><div class="m-val '+(avg>=0?'pos':'neg')+'">'+idr(avg,true)+'</div></div>';
   const allS=sessions.slice().sort(function(a,b){return a.date.localeCompare(b.date);});
   let streak=0,st='';
-  for(let i=allS.length-1;i>=0;i--){const w=allS[i].amount>0;if(!streak){streak=1;st=w?'win':'loss';}else if((w&&st==='win')||(!w&&st==='loss'))streak++;else break;}
+  for(let i=allS.length-1;i>=0;i--){const w=allS[i].amount>=0;if(!streak){streak=1;st=w?'win':'loss';}else if((w&&st==='win')||(!w&&st==='loss'))streak++;else break;}
   document.getElementById('streak-el').innerHTML='<div class="streak"><div class="streak-dot" style="background:'+(st==='win'?'var(--green)':'var(--red)')+'"></div><span>'+streak+' session '+st+' streak</span></div>';
   const labels=[],data=[];let run=0,lastMo='';
   const single=(activeFilter!=='all'&&activeFilter!=='range');
@@ -783,7 +783,7 @@ function renderMonthly(){
   const keys=Object.keys(months).sort().reverse();
   const el=document.getElementById('monthly-list');el.innerHTML='';
   keys.forEach(function(mk){
-    const ms=months[mk],tot=ms.reduce(function(a,x){return a+x.amount;},0),w=ms.filter(function(x){return x.amount>0;}).length;
+    const ms=months[mk],tot=ms.reduce(function(a,x){return a+x.amount;},0),w=ms.filter(function(x){return x.amount>=0;}).length;
     const wr=(w/ms.length*100).toFixed(2),p=mk.split('-');
     const name=new Date(+p[0],+p[1]-1,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'}),pos=tot>=0;
     const block=document.createElement('div');block.className='month-block';
@@ -909,7 +909,7 @@ function handleImport(event) {
   reader.onload = function(e) {
     try {
       const data = new Uint8Array(e.target.result);
-      const wb = XLSX.read(data, { type: 'array', cellDates: true });
+      const wb = XLSX.read(data, { type: 'array', cellDates: false });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
       // Skip header row if first cell looks like text not a date/number
@@ -926,13 +926,13 @@ function handleImport(event) {
         let dateStr = '';
         const rawDate = row[0];
         if (rawDate instanceof Date) {
-          // Use local date parts to avoid timezone shift
-          const y = rawDate.getFullYear();
-          const m = String(rawDate.getMonth()+1).padStart(2,'0');
-          const d = String(rawDate.getDate()).padStart(2,'0');
+          // Use UTC parts to avoid timezone shift (Excel dates are UTC midnight)
+          const y = rawDate.getUTCFullYear();
+          const m = String(rawDate.getUTCMonth()+1).padStart(2,'0');
+          const d = String(rawDate.getUTCDate()).padStart(2,'0');
           dateStr = y+'-'+m+'-'+d;
         } else if (typeof rawDate === 'number') {
-          // Excel serial number — use UTC to avoid timezone shift
+          // Excel serial number — convert without timezone adjustment
           const totalMs = Math.round((rawDate - 25569) * 86400 * 1000);
           const dt = new Date(totalMs);
           const y = dt.getUTCFullYear();
