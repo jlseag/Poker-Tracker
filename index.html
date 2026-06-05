@@ -193,7 +193,7 @@
       <input type="date" id="edit-date" class="edit-input"/>
     </div>
     <div class="edit-field">
-      <label class="edit-label">Result (thousands Rp)</label>
+      <label class="edit-label">Result (full Rp amount)</label>
       <input type="number" id="edit-amount" class="edit-input" placeholder="500 or -300"/>
     </div>
     <div class="edit-field">
@@ -270,7 +270,13 @@
   </div>
   <div class="content">
     <div id="page-dashboard" class="page active">
-      <div class="timeline-bar" id="timeline-bar"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div class="timeline-bar" id="timeline-bar" style="margin-bottom:0;flex:1;"></div>
+      <div style="display:flex;gap:6px;flex-shrink:0;margin-left:8px;">
+        <button id="btn-idr" onclick="setCurrency('IDR')" style="padding:6px 12px;font-family:var(--font-m);font-size:11px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--bg2);color:var(--muted);">Rp</button>
+        <button id="btn-usd" onclick="setCurrency('USD')" style="padding:6px 12px;font-family:var(--font-m);font-size:11px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--bg2);color:var(--muted);">USD</button>
+      </div>
+    </div>
       <div class="range-picker" id="range-picker">
         <div class="range-row">
           <input type="date" id="range-from" class="range-input"/>
@@ -308,9 +314,9 @@
         <input type="date" id="inp-date" class="f-input"/>
       </div>
       <div class="form-section">
-        <label class="f-label">Result (thousands Rp)</label>
+        <label class="f-label">Result (full Rupiah amount)</label>
         <input type="number" id="inp-amt" class="f-input" placeholder="500 or -300"/>
-        <div class="f-hint">Enter as in your log — 500 = Rp 500,000</div>
+        <div class="f-hint">Enter the full amount — e.g. 600000 for Rp 600,000</div>
       </div>
       <div class="form-section">
         <label class="f-label">Notes (optional)</label>
@@ -333,7 +339,8 @@
           Import file
         </button>
         <input type="file" id="import-file-input" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleImport(event)"/>
-        <div class="import-hint">Supports .xlsx, .xls, .csv<br/>Columns: Date · Amount (thousands Rp) · Notes (optional)</div>
+        <div class="import-hint">Supports .xlsx, .xls, .csv<br/>Columns: Date · Amount (full Rp e.g. 600000) · Notes (optional)
+Supports Rp prefix — e.g. Rp600.000 is auto-converted</div>
         <div class="import-preview" id="import-preview">
           <div class="preview-title" id="preview-title"></div>
           <div id="preview-rows"></div>
@@ -355,17 +362,17 @@ const REDIRECT = 'https://jlseag.github.io/Poker-Tracker';
 
 // ── SEED ──────────────────────────────────────────────────────────────────────
 const SEED = [
-  {date:'2025-05-01',amount:500,note:''},{date:'2025-05-05',amount:-700,note:''},{date:'2025-05-10',amount:500,note:''},{date:'2025-05-15',amount:-800,note:''},{date:'2025-05-17',amount:-250,note:''},{date:'2025-05-20',amount:400,note:''},{date:'2025-05-28',amount:250,note:''},
-  {date:'2025-06-05',amount:-400,note:''},{date:'2025-06-10',amount:200,note:''},{date:'2025-06-15',amount:-100,note:''},{date:'2025-06-20',amount:-300,note:''},{date:'2025-06-25',amount:650,note:''},{date:'2025-06-28',amount:-900,note:''},
-  {date:'2025-07-01',amount:210,note:''},{date:'2025-07-05',amount:320,note:''},{date:'2025-07-10',amount:-50,note:''},{date:'2025-07-15',amount:470,note:''},{date:'2025-07-20',amount:-70,note:''},{date:'2025-07-25',amount:575,note:''},{date:'2025-07-28',amount:812,note:''},
-  {date:'2025-08-03',amount:581,note:''},{date:'2025-08-05',amount:-350,note:''},{date:'2025-08-09',amount:630,note:''},{date:'2025-08-15',amount:335,note:''},{date:'2025-08-20',amount:520,note:''},{date:'2025-08-25',amount:300,note:''},{date:'2025-08-28',amount:312,note:''},
-  {date:'2025-11-01',amount:525,note:''},{date:'2025-11-03',amount:-170,note:''},{date:'2025-11-05',amount:755,note:''},{date:'2025-11-07',amount:516,note:''},{date:'2025-11-12',amount:550,note:''},{date:'2025-11-14',amount:335,note:''},{date:'2025-11-20',amount:1200,note:''},{date:'2025-11-25',amount:100,note:''},{date:'2025-11-28',amount:250,note:''},
-  {date:'2025-12-01',amount:-200,note:''},{date:'2025-12-02',amount:-700,note:''},{date:'2025-12-05',amount:1162,note:''},{date:'2025-12-06',amount:-450,note:''},{date:'2025-12-08',amount:-1500,note:''},{date:'2025-12-10',amount:310,note:''},{date:'2025-12-15',amount:-320,note:''},{date:'2025-12-20',amount:400,note:''},{date:'2025-12-25',amount:500,note:''},{date:'2025-12-30',amount:-450,note:''},
-  {date:'2026-01-02',amount:150,note:''},{date:'2026-01-05',amount:310,note:''},{date:'2026-01-07',amount:300,note:''},{date:'2026-01-10',amount:250,note:'john freak'},{date:'2026-01-13',amount:430,note:'brian chian'},{date:'2026-01-14',amount:746,note:''},{date:'2026-01-16',amount:400,note:''},{date:'2026-01-18',amount:300,note:''},{date:'2026-01-20',amount:-37,note:'dim phil alsut'},{date:'2026-01-31',amount:-700,note:'played bad'},
-  {date:'2026-02-06',amount:-300,note:'hagen bad beats'},{date:'2026-02-15',amount:700,note:'online 50k tourney'},{date:'2026-02-17',amount:-800,note:'ko sam angpao'},{date:'2026-02-19',amount:1200,note:'the Hagens 88'},{date:'2026-02-22',amount:656,note:'card fixed?'},{date:'2026-02-28',amount:1200,note:'titis 10/2'},
-  {date:'2026-03-05',amount:-83,note:'online w calv kenz'},{date:'2026-03-07',amount:900,note:'straight flush v anya'},{date:'2026-03-09',amount:568,note:'NIT online gaming'},{date:'2026-03-12',amount:-300,note:'ariel online win'},{date:'2026-03-15',amount:279,note:'hero ajez w 2 pair'},{date:'2026-03-15',amount:-50,note:'tyson coolers 1v1'},{date:'2026-03-16',amount:748,note:'onl james tys rey'},{date:'2026-03-21',amount:480,note:'onl 4 man'},{date:'2026-03-24',amount:100,note:'tys heads up'},{date:'2026-03-25',amount:25,note:'ajez tys james'},{date:'2026-03-26',amount:100,note:'ajez heads up'},{date:'2026-03-29',amount:372,note:'onl james tys rey'},{date:'2026-03-30',amount:75,note:'tys bad beat AA 2x'},{date:'2026-03-31',amount:-1500,note:'onl AA vs AK james'},
-  {date:'2026-04-02',amount:60,note:'tys patio nuts always'},{date:'2026-04-05',amount:796,note:'called out james a5'},{date:'2026-04-07',amount:1175,note:'had to fold jj twice'},{date:'2026-04-09',amount:443,note:'allin 2x pot bluff titi K2'},{date:'2026-04-11',amount:-138,note:'pure donation'},{date:'2026-04-12',amount:280,note:'hero called titi king high'},{date:'2026-04-13',amount:-193,note:'did not win a single 50k tourney'},{date:'2026-04-17',amount:45,note:''},{date:'2026-04-18',amount:-414,note:''},{date:'2026-04-19',amount:151,note:'straight flush v anya aq diamond'},{date:'2026-04-20',amount:-150,note:''},{date:'2026-04-21',amount:570,note:''},{date:'2026-04-25',amount:700,note:'offline Remys w ajez, 10/2 fullhouse vs 66'},{date:'2026-04-26',amount:406,note:"called remy's triple barrel bluff j9"},{date:'2026-04-27',amount:147,note:'Tim bluffed into my straight'},{date:'2026-04-29',amount:-50,note:'1v1 ajez heads up'},
-  {date:'2026-05-01',amount:1500,note:'offline remys w abe, folded nut straight against phil'},{date:'2026-05-04',amount:-227,note:'trolling online'},{date:'2026-05-05',amount:220,note:'Ajez ran it once'},{date:'2026-05-08',amount:1560,note:'live reads at remy, hero call ajez ace high'},{date:'2026-05-09',amount:817,note:'titi punted 500k with 62 offsuit'},{date:'2026-05-12',amount:1560,note:'bluffed remy, he folded second nut flush k10'},{date:'2026-05-14',amount:718,note:'taking turns with echo, bluffed reyner with 57'},{date:'2026-05-15',amount:-600,note:'absolute bluff rampage in remys'},{date:'2026-05-16',amount:370,note:'played with cha, cho, ariel, jen, nadia'},{date:'2026-05-18',amount:437,note:'3 j 3 7 5, pocket 77 boat against remy'},{date:'2026-05-19',amount:277,note:'ak boat kk2a4 vs ajez j7 diamond flush'},{date:'2026-05-22',amount:600,note:'called kenzies 102 triple barrel with aces'},{date:'2026-05-23',amount:635,note:'online bluff on seon'},
+  {date:'2025-05-01',amount:500000,note:''},{date:'2025-05-05',amount:-700000,note:''},{date:'2025-05-10',amount:500000,note:''},{date:'2025-05-15',amount:-800000,note:''},{date:'2025-05-17',amount:-250000,note:''},{date:'2025-05-20',amount:400000,note:''},{date:'2025-05-28',amount:250000,note:''},
+  {date:'2025-06-05',amount:-400000,note:''},{date:'2025-06-10',amount:200000,note:''},{date:'2025-06-15',amount:-100000,note:''},{date:'2025-06-20',amount:-300000,note:''},{date:'2025-06-25',amount:650000,note:''},{date:'2025-06-28',amount:-900000,note:''},
+  {date:'2025-07-01',amount:210000,note:''},{date:'2025-07-05',amount:320000,note:''},{date:'2025-07-10',amount:-50000,note:''},{date:'2025-07-15',amount:470000,note:''},{date:'2025-07-20',amount:-70000,note:''},{date:'2025-07-25',amount:575000,note:''},{date:'2025-07-28',amount:812000,note:''},
+  {date:'2025-08-03',amount:581000,note:''},{date:'2025-08-05',amount:-350000,note:''},{date:'2025-08-09',amount:630000,note:''},{date:'2025-08-15',amount:335000,note:''},{date:'2025-08-20',amount:520000,note:''},{date:'2025-08-25',amount:300000,note:''},{date:'2025-08-28',amount:312000,note:''},
+  {date:'2025-11-01',amount:525000,note:''},{date:'2025-11-03',amount:-170000,note:''},{date:'2025-11-05',amount:755000,note:''},{date:'2025-11-07',amount:516000,note:''},{date:'2025-11-12',amount:550000,note:''},{date:'2025-11-14',amount:335000,note:''},{date:'2025-11-20',amount:1200000,note:''},{date:'2025-11-25',amount:100000,note:''},{date:'2025-11-28',amount:250000,note:''},
+  {date:'2025-12-01',amount:-200000,note:''},{date:'2025-12-02',amount:-700000,note:''},{date:'2025-12-05',amount:1162000,note:''},{date:'2025-12-06',amount:-450000,note:''},{date:'2025-12-08',amount:-1500000,note:''},{date:'2025-12-10',amount:310000,note:''},{date:'2025-12-15',amount:-320000,note:''},{date:'2025-12-20',amount:400000,note:''},{date:'2025-12-25',amount:500000,note:''},{date:'2025-12-30',amount:-450000,note:''},
+  {date:'2026-01-02',amount:150000,note:''},{date:'2026-01-05',amount:310000,note:''},{date:'2026-01-07',amount:300000,note:''},{date:'2026-01-10',amount:250000,note:'john freak'},{date:'2026-01-13',amount:430000,note:'brian chian'},{date:'2026-01-14',amount:746000,note:''},{date:'2026-01-16',amount:400000,note:''},{date:'2026-01-18',amount:300000,note:''},{date:'2026-01-20',amount:-37000,note:'dim phil alsut'},{date:'2026-01-31',amount:-700000,note:'played bad'},
+  {date:'2026-02-06',amount:-300000,note:'hagen bad beats'},{date:'2026-02-15',amount:700000,note:'online 50k tourney'},{date:'2026-02-17',amount:-800000,note:'ko sam angpao'},{date:'2026-02-19',amount:1200000,note:'the Hagens 88'},{date:'2026-02-22',amount:656000,note:'card fixed?'},{date:'2026-02-28',amount:1200000,note:'titis 10/2'},
+  {date:'2026-03-05',amount:-83000,note:'online w calv kenz'},{date:'2026-03-07',amount:900000,note:'straight flush v anya'},{date:'2026-03-09',amount:568000,note:'NIT online gaming'},{date:'2026-03-12',amount:-300000,note:'ariel online win'},{date:'2026-03-15',amount:279000,note:'hero ajez w 2 pair'},{date:'2026-03-15',amount:-50000,note:'tyson coolers 1v1'},{date:'2026-03-16',amount:748000,note:'onl james tys rey'},{date:'2026-03-21',amount:480000,note:'onl 4 man'},{date:'2026-03-24',amount:100000,note:'tys heads up'},{date:'2026-03-25',amount:25000,note:'ajez tys james'},{date:'2026-03-26',amount:100000,note:'ajez heads up'},{date:'2026-03-29',amount:372000,note:'onl james tys rey'},{date:'2026-03-30',amount:75000,note:'tys bad beat AA 2x'},{date:'2026-03-31',amount:-1500000,note:'onl AA vs AK james'},
+  {date:'2026-04-02',amount:60000,note:'tys patio nuts always'},{date:'2026-04-05',amount:796000,note:'called out james a5'},{date:'2026-04-07',amount:1175000,note:'had to fold jj twice'},{date:'2026-04-09',amount:443000,note:'allin 2x pot bluff titi K2'},{date:'2026-04-11',amount:-138000,note:'pure donation'},{date:'2026-04-12',amount:280000,note:'hero called titi king high'},{date:'2026-04-13',amount:-193000,note:'did not win a single 50k tourney'},{date:'2026-04-17',amount:45000,note:''},{date:'2026-04-18',amount:-414000,note:''},{date:'2026-04-19',amount:151000,note:'straight flush v anya aq diamond'},{date:'2026-04-20',amount:-150000,note:''},{date:'2026-04-21',amount:570000,note:''},{date:'2026-04-25',amount:700000,note:'offline Remys w ajez, 10/2 fullhouse vs 66'},{date:'2026-04-26',amount:406000,note:"called remy's triple barrel bluff j9"},{date:'2026-04-27',amount:147000,note:'Tim bluffed into my straight'},{date:'2026-04-29',amount:-50000,note:'1v1 ajez heads up'},
+  {date:'2026-05-01',amount:1500000,note:'offline remys w abe, folded nut straight against phil'},{date:'2026-05-04',amount:-227000,note:'trolling online'},{date:'2026-05-05',amount:220000,note:'Ajez ran it once'},{date:'2026-05-08',amount:1560000,note:'live reads at remy, hero call ajez ace high'},{date:'2026-05-09',amount:817000,note:'titi punted 500k with 62 offsuit'},{date:'2026-05-12',amount:1560000,note:'bluffed remy, he folded second nut flush k10'},{date:'2026-05-14',amount:718000,note:'taking turns with echo, bluffed reyner with 57'},{date:'2026-05-15',amount:-600000,note:'absolute bluff rampage in remys'},{date:'2026-05-16',amount:370000,note:'played with cha, cho, ariel, jen, nadia'},{date:'2026-05-18',amount:437000,note:'3 j 3 7 5, pocket 77 boat against remy'},{date:'2026-05-19',amount:277000,note:'ak boat kk2a4 vs ajez j7 diamond flush'},{date:'2026-05-22',amount:600000,note:'called kenzies 102 triple barrel with aces'},{date:'2026-05-23',amount:635000,note:'online bluff on seon'},
 ];
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
@@ -377,8 +384,47 @@ let profitChart=null;
 const mCharts={};
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
-function idr(v,round){const real=(round?Math.round(v):v)*1000;const abs=Math.abs(real);return(v<0?'-':'+')+'\u202fRp\u00a0'+abs.toLocaleString('id-ID');}
-function idrShort(v){const abs=Math.abs(v);if(abs>=1000)return(v<0?'-':'')+Math.round(abs/1000)+'jt';return(v<0?'-':'')+abs+'rb';}
+// ── CURRENCY ──────────────────────────────────────────────────────────────────
+let activeCurrency = localStorage.getItem('pl_currency') || 'IDR';
+let usdRate = null;
+
+async function fetchUSDRate() {
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/USD');
+    const data = await res.json();
+    usdRate = data.rates && data.rates.IDR ? data.rates.IDR : 16000;
+  } catch(e) { usdRate = 16000; }
+}
+
+function fmtAmount(v, round) {
+  const val = round ? Math.round(v) : v;
+  if (activeCurrency === 'USD') {
+    const rate = usdRate || 16000;
+    const usd = val / rate;
+    const abs = Math.abs(usd);
+    return (v < 0 ? '-' : '+') + '$' + abs.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  const abs = Math.abs(val);
+  return (v < 0 ? '-' : '+') + 'Rp\u00a0' + abs.toLocaleString('id-ID');
+}
+
+function fmtShort(v) {
+  if (activeCurrency === 'USD') {
+    const rate = usdRate || 16000;
+    const usd = v / rate;
+    const abs = Math.abs(usd);
+    if (abs >= 1000) return (v<0?'-':'') + '$' + Math.round(abs/1000) + 'k';
+    return (v<0?'-':'') + '$' + abs.toFixed(0);
+  }
+  const abs = Math.abs(v);
+  if (abs >= 1000000) return (v<0?'-':'') + Math.round(abs/1000000) + 'jt';
+  if (abs >= 1000) return (v<0?'-':'') + Math.round(abs/1000) + 'rb';
+  return (v<0?'-':'') + abs;
+}
+
+function idr(v, round) { return fmtAmount(v, round); }
+function idrShort(v) { return fmtShort(v); }
+
 function fmtDate(d){return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
 function monthKey(d){return d.slice(0,7);}
 function monthLabel(mk){const[yr,mo]=mk.split('-');return new Date(+yr,+mo-1,1).toLocaleDateString('en-GB',{month:'long'});}
@@ -537,9 +583,10 @@ async function initApp(user, token){
   currentUser=user;accessToken=token;
   setUserUI(user);
   setLoadingText('Loading your sessions...');showScreen('loading');
+  fetchUSDRate();
   await loadSessions();
   await seedIfEmpty();
-  showScreen('app');renderDashboard();
+  showScreen('app');renderDashboard();updateCurrencyButtons();
 }
 
 async function boot(){
@@ -827,6 +874,30 @@ document.getElementById('edit-modal-overlay').addEventListener('click', function
   if (e.target === this) closeEditModal();
 });
 
+// ── CURRENCY TOGGLE ──────────────────────────────────────────────────────────
+function setCurrency(c) {
+  activeCurrency = c;
+  localStorage.setItem('pl_currency', c);
+  updateCurrencyButtons();
+  renderDashboard();
+  // re-render monthly if visible
+  if (document.getElementById('page-monthly').classList.contains('active')) renderMonthly();
+  if (document.getElementById('page-history').classList.contains('active')) renderHistory();
+}
+
+function updateCurrencyButtons() {
+  const idrBtn = document.getElementById('btn-idr');
+  const usdBtn = document.getElementById('btn-usd');
+  if (!idrBtn || !usdBtn) return;
+  if (activeCurrency === 'IDR') {
+    idrBtn.style.background = 'var(--acc-bg)'; idrBtn.style.color = 'var(--acc-txt)'; idrBtn.style.borderColor = 'var(--acc-bg)';
+    usdBtn.style.background = 'var(--bg2)'; usdBtn.style.color = 'var(--muted)'; usdBtn.style.borderColor = 'var(--border)';
+  } else {
+    usdBtn.style.background = 'var(--acc-bg)'; usdBtn.style.color = 'var(--acc-txt)'; usdBtn.style.borderColor = 'var(--acc-bg)';
+    idrBtn.style.background = 'var(--bg2)'; idrBtn.style.color = 'var(--muted)'; idrBtn.style.borderColor = 'var(--border)';
+  }
+}
+
 // ── IMPORT ────────────────────────────────────────────────────────────────────
 let importRows = [];
 
@@ -849,23 +920,53 @@ function handleImport(event) {
       importRows = [];
       for (let i = startRow; i < rows.length; i++) {
         const row = rows[i];
-        if (!row[0] && !row[1]) continue; // skip empty rows
-        // Parse date
+        if (!row[0] && !row[1]) continue;
+
+        // ── Parse date ──
         let dateStr = '';
         const rawDate = row[0];
         if (rawDate instanceof Date) {
           dateStr = rawDate.toISOString().split('T')[0];
         } else if (typeof rawDate === 'number') {
-          // Excel serial date
+          // Excel serial number
           const d = new Date(Math.round((rawDate - 25569) * 86400 * 1000));
           dateStr = d.toISOString().split('T')[0];
         } else {
-          const parsed = new Date(rawDate);
-          if (!isNaN(parsed)) dateStr = parsed.toISOString().split('T')[0];
+          const s = String(rawDate).trim();
+          // Try DD/MM/YYYY or D/M/YYYY
+          const dmyMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+          if (dmyMatch) {
+            const dd = dmyMatch[1].padStart(2,'0');
+            const mm = dmyMatch[2].padStart(2,'0');
+            const yyyy = dmyMatch[3];
+            dateStr = yyyy + '-' + mm + '-' + dd;
+          } else {
+            // Try MM/DD/YYYY or YYYY-MM-DD
+            const parsed = new Date(s);
+            if (!isNaN(parsed)) dateStr = parsed.toISOString().split('T')[0];
+          }
         }
         if (!dateStr) continue;
-        const amount = parseInt(row[1], 10);
-        if (isNaN(amount)) continue;
+
+        // ── Parse amount ──
+        // Handle formats like "Rp30.000", "-Rp200.000", "Rp1.200.000"
+        let rawAmt = String(row[1]).trim();
+        // Remove currency prefix and spaces
+        rawAmt = rawAmt.replace(/Rp/gi, '').replace(/\s/g, '');
+        // Detect if dots are thousand separators (e.g. "30.000" = 30000)
+        // If ends with exactly 3 digits after last dot, treat dots as thousand separators
+        const dotParts = rawAmt.replace('-','').split('.');
+        const allThousands = dotParts.length > 1 && dotParts.slice(1).every(function(p){ return p.length === 3; });
+        if (allThousands) {
+          rawAmt = rawAmt.replace(/\./g, '');
+        }
+        // Replace comma decimals
+        rawAmt = rawAmt.replace(',', '.');
+        const fullAmount = parseFloat(rawAmt);
+        if (isNaN(fullAmount)) continue;
+        // Store as full rupiah
+        const amount = Math.round(fullAmount);
+
         const note = row[2] ? String(row[2]).trim() : '';
         importRows.push({ date: dateStr, amount: amount, note: note });
       }
