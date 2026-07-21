@@ -228,6 +228,7 @@
     </a>
     <div class="auth-note">Your data is private and only accessible when signed in to your account.</div>
   </div>
+  <div id="auth-debug" style="font-family:var(--font-m);font-size:9px;color:var(--muted);margin-top:20px;padding:10px;background:rgba(0,0,0,0.05);border-radius:8px;max-width:340px;width:100%;text-align:left;white-space:pre-wrap;word-break:break-all;line-height:1.5;user-select:text;-webkit-user-select:text;"></div>
 </div>
 
 <div id="loading-screen" class="loading-screen">
@@ -428,8 +429,42 @@ function idrShort(v) { return fmtShort(v); }
 function fmtDate(d){return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
 function monthKey(d){return d.slice(0,7);}
 function monthLabel(mk){const[yr,mo]=mk.split('-');return new Date(+yr,+mo-1,1).toLocaleDateString('en-GB',{month:'long'});}
-function showScreen(n){document.getElementById('auth-screen').style.display=n==='auth'?'flex':'none';document.getElementById('loading-screen').style.display=n==='loading'?'flex':'none';document.getElementById('app').style.display=n==='app'?'block':'none';}
+function showScreen(n){
+  document.getElementById('auth-screen').style.display=n==='auth'?'flex':'none';
+  document.getElementById('loading-screen').style.display=n==='loading'?'flex':'none';
+  document.getElementById('app').style.display=n==='app'?'block':'none';
+  if(n==='auth') renderDebug();
+}
 function setLoadingText(t){document.getElementById('loading-txt').textContent=t;}
+
+// ── DEBUG (temporary — for diagnosing auto-login issue) ───────────────────────
+let debugTrail = [];
+function dbg(msg){
+  const stamp = new Date().toISOString().slice(11,23);
+  const line = stamp + ' ' + msg;
+  debugTrail.push(line);
+  try{ localStorage.setItem('pl_debug_curr', debugTrail.join('\n')); }catch(e){}
+}
+function renderDebug(){
+  const el = document.getElementById('auth-debug');
+  if(!el) return;
+  let prev = '';
+  try{ prev = localStorage.getItem('pl_debug_prev') || '(none)'; }catch(e){ prev = 'read err: '+e.message; }
+  let keys = [];
+  try{ for(let i=0;i<localStorage.length;i++) keys.push(localStorage.key(i)); }catch(e){ keys = ['err: '+e.message]; }
+  let hasSession = false;
+  try{ const s = localStorage.getItem('sb_sessions'); hasSession = !!(s && s.length > 10); }catch(e){}
+  const standalone = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  el.textContent = 'DEBUG — screenshot & send\n\nstandalone: '+standalone+'\nhas sb_sessions: '+hasSession+'\nlocalStorage keys: ['+keys.join(', ')+']\n\n=== THIS BOOT ===\n'+(debugTrail.join('\n')||'(empty)')+'\n\n=== PREVIOUS BOOT ===\n'+prev;
+}
+function rotateDebug(){
+  try{
+    const cur = localStorage.getItem('pl_debug_curr');
+    if(cur) localStorage.setItem('pl_debug_prev', cur);
+    localStorage.removeItem('pl_debug_curr');
+  }catch(e){}
+  debugTrail = [];
+}
 
 // ── REST API ──────────────────────────────────────────────────────────────────
 async function sbFetch(path, opts){
@@ -556,9 +591,14 @@ function saveSession(sess){
     const email = sess.user && sess.user.email ? sess.user.email : 'default';
     const all = getAllSessions();
     all[email] = sess;
-    localStorage.setItem('sb_sessions', JSON.stringify(all));
+    const payload = JSON.stringify(all);
+    localStorage.setItem('sb_sessions', payload);
     localStorage.setItem('sb_last_email', email);
-  }catch(e){}
+    const verify = localStorage.getItem('sb_sessions');
+    dbg('saveSession OK: email='+email+' hasRefresh='+!!sess.refresh_token+' hasUser='+!!sess.user+' payloadLen='+payload.length+' verifyLen='+(verify?verify.length:0));
+  }catch(e){
+    dbg('saveSession ERROR: '+e.name+' - '+e.message);
+  }
 }
 function getAllSessions(){
   try{const s=localStorage.getItem('sb_sessions');return s?JSON.parse(s):{};} catch(e){return {};}
@@ -590,11 +630,16 @@ async function initApp(user, token){
 }
 
 async function boot(){
+  rotateDebug();
+  dbg('boot start; standalone='+((window.navigator.standalone===true)||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)));
+  let lsKeys=[]; try{for(let i=0;i<localStorage.length;i++)lsKeys.push(localStorage.key(i));}catch(e){}
+  dbg('localStorage keys at boot: ['+lsKeys.join(',')+']');
   showScreen('loading');setLoadingText('Checking login...');
 
   try {
     // Check for OAuth callback (hash fragment from Supabase redirect)
     const hash=window.location.hash;
+    dbg('hash present: '+(hash?'yes ('+hash.length+' chars)':'no'));
     setLoadingText('Step 1: hash='+(hash?'yes':'no'));
 
     if(hash&&hash.includes('access_token')){
@@ -602,14 +647,17 @@ async function boot(){
       const params=new URLSearchParams(hash.replace('#',''));
       const token=params.get('access_token');
       const refresh=params.get('refresh_token');
+      dbg('hash tokens: access='+!!token+' refresh='+!!refresh);
       if(token){
         setLoadingText('Verifying token...');
         const res=await fetch(SB_URL+'/auth/v1/user',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+token}});
+        dbg('hash verify status: '+res.status);
         setLoadingText('Token check: '+res.status);
         if(res.ok){
           const user=await res.json();
           saveSession({access_token:token,refresh_token:refresh,user:user});
           history.replaceState(null,'',window.location.pathname);
+          dbg('hash flow OK, calling initApp for '+user.email);
           await initApp(user,token);
           return;
         }
@@ -619,36 +667,48 @@ async function boot(){
     // Check saved session
     setLoadingText('Checking saved session...');
     const saved=getSavedSession();
+    dbg('getSavedSession: '+(saved?'found (email='+(saved.user&&saved.user.email)+', hasRefresh='+!!saved.refresh_token+')':'null'));
     setLoadingText('Saved session: '+(saved?'found':'none'));
 
     if(saved&&saved.access_token){
       setLoadingText('Verifying saved token...');
       const res=await fetch(SB_URL+'/auth/v1/user',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+saved.access_token}});
+      dbg('saved verify status: '+res.status);
       setLoadingText('Saved token check: '+res.status);
       if(res.ok){
         const user=await res.json();
+        dbg('saved OK, calling initApp for '+user.email);
         await initApp(user,saved.access_token);
         return;
       }
       if(saved.refresh_token){
         setLoadingText('Refreshing token...');
         const rRes=await fetch(SB_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:saved.refresh_token})});
+        dbg('refresh status: '+rRes.status);
         setLoadingText('Refresh: '+rRes.status);
         if(rRes.ok){
           const newSess=await rRes.json();
+          dbg('refresh body: hasUser='+!!newSess.user+' hasAccess='+!!newSess.access_token+' hasRefresh='+!!newSess.refresh_token);
           saveSession(newSess);
           await initApp(newSess.user,newSess.access_token);
           return;
+        } else {
+          let body=''; try{body=await rRes.text();}catch(e){}
+          dbg('refresh FAILED body: '+body.slice(0,200));
         }
+      } else {
+        dbg('no refresh_token on saved session — cannot recover');
       }
       localStorage.removeItem('sb_session');
     }
 
+    dbg('falling through to auth screen');
     setLoadingText('No session — showing login...');
     document.getElementById('google-signin-btn').href=buildGoogleOAuthURL();
     showScreen('auth');
 
   } catch(err) {
+    dbg('boot CATCH: '+err.name+' - '+err.message);
     setLoadingText('ERROR: '+err.message);
     console.error('Boot error:', err);
     setTimeout(function(){
