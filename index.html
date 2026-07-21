@@ -323,7 +323,7 @@
         <textarea id="inp-note" class="f-input" placeholder="e.g. the infamous pocket 88 scandal"></textarea>
       <script>
         (function(){
-          var hints=["e.g. the infamous pocket 88 scandal","e.g. I didn\'t cheat, I just changed my cards","e.g. the only thing stopping me is god at this point"];
+          var hints=["but i was honestly planning to do that, sekalian my bday","I didn't cheat, I just changed my cards","I just thought differently abt u guys, cz its not like kita temen baru or like temen poker doang kan","evrryday i try to bring myself, tp gw anxiety","I was whimpering not bcz i was scared to get caught, but scared im gonna lose you guys"];
           var el=document.getElementById('inp-note');
           if(el) el.placeholder=hints[Math.floor(Math.random()*hints.length)];
         })();
@@ -826,7 +826,7 @@ function switchPage(name){
   if(name==='monthly')renderMonthly();
   if(name==='add'){
     document.getElementById('inp-date').value=new Date().toISOString().split('T')[0];
-    var hints=["e.g. the infamous pocket 88 scandal","e.g. I didn't cheat, I just changed my cards","e.g. the only thing stopping me is god at this point"];
+    var hints=["but i was honestly planning to do that, sekalian my bday","I didn't cheat, I just changed my cards","I just thought differently abt u guys, cz its not like kita temen baru or like temen poker doang kan","evrryday i try to bring myself, tp gw anxiety","I was whimpering not bcz i was scared to get caught, but scared im gonna lose you guys"];
     var noteEl=document.getElementById('inp-note');
     if(noteEl) noteEl.placeholder=hints[Math.floor(Math.random()*hints.length)];
   }
