@@ -16,7 +16,7 @@
 <style>
   :root{--bg:#f5f5f0;--bg2:#ffffff;--border:rgba(0,0,0,0.09);--shadow:0 1px 4px rgba(0,0,0,0.07);--text:#111111;--muted:#888888;--green:#00995e;--red:#d63030;--acc-bg:#111111;--acc-txt:#ffffff;--font-d:'Syne',sans-serif;--font-m:'DM Mono',monospace;}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-  html,body{background:var(--bg);color:var(--text);font-family:var(--font-d);min-height:100vh;overflow-x:hidden;}
+  html,body{background:var(--bg);color:var(--text);font-family:var(--font-d);min-height:100vh;overflow-x:clip;}
   .auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px 24px;text-align:center;}
   .auth-logo{font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:8px;}
   .auth-logo span{color:#1a7a4a;}
@@ -30,7 +30,8 @@
   .spinner{width:28px;height:28px;border:2.5px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .loading-txt{font-family:var(--font-m);font-size:12px;color:var(--muted);}
-  .header{padding:52px 20px 10px;background:var(--bg);position:sticky;top:0;z-index:20;border-bottom:1px solid var(--border);}
+  .sticky-top{position:sticky;top:0;z-index:20;background:var(--bg);}
+  .header{padding:52px 20px 10px;background:var(--bg);border-bottom:1px solid var(--border);}
   .header-inner{display:flex;align-items:flex-end;justify-content:space-between;}
   .logo{font-size:22px;font-weight:800;letter-spacing:-0.5px;}
   .logo span{color:#1a7a4a;}
@@ -236,6 +237,7 @@
 </div>
 
 <div id="app" style="display:none;">
+  <div class="sticky-top">
   <div class="header">
     <div class="header-inner">
       <div>
@@ -267,6 +269,7 @@
     <button class="nav-btn" onclick="switchPage('history')">History</button>
     <button class="nav-btn" onclick="switchPage('monthly')">Monthly</button>
     <button class="nav-btn" onclick="switchPage('add')">+ Add</button>
+  </div>
   </div>
   <div class="content">
     <div id="page-dashboard" class="page active">
