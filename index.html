@@ -178,6 +178,79 @@
   .preview-actions{display:flex;gap:8px;margin-top:14px;}
   .preview-confirm{flex:1;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-family:var(--font-d);font-size:14px;font-weight:700;cursor:pointer;}
   .preview-cancel{padding:12px 16px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:10px;font-family:var(--font-d);font-size:14px;font-weight:600;cursor:pointer;}
+  /* ── FRIENDS FEATURE ─────────────────────────────────────────────────────── */
+  .fr-screen{display:none;flex-direction:column;min-height:100vh;background:var(--bg);}
+  .fr-screen.show{display:flex;}
+  .fr-hdr{padding:52px 20px 12px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;}
+  .fr-hdr-l{display:flex;align-items:center;gap:10px;}
+  .fr-back{font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--text);cursor:pointer;background:none;border:none;padding:0;line-height:1;}
+  .fr-title{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--text);}
+  .fr-sub{font-family:var(--font-m);font-size:11px;color:var(--muted);}
+  .fr-content{padding:16px;flex:1;}
+  .fr-count{font-family:var(--font-m);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin:8px 4px 8px;}
+  .fr-row-add{display:flex;align-items:center;justify-content:space-between;margin:8px 0;}
+  .fr-add-btn{display:flex;gap:6px;align-items:center;padding:8px 14px;background:#fff;color:var(--green);border:1.5px solid var(--green);border-radius:20px;font-family:var(--font-d);font-size:12px;font-weight:600;letter-spacing:.03em;cursor:pointer;}
+  .fr-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;box-shadow:var(--shadow);}
+  .fr-card-l{display:flex;align-items:center;gap:10px;min-width:0;flex:1;}
+  .fr-avatar{width:36px;height:36px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:13px;font-weight:500;flex-shrink:0;text-transform:uppercase;}
+  .fr-handle{font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.2px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .fr-handle .fr-tag{color:var(--green);}
+  .fr-mr{text-align:right;flex-shrink:0;}
+  .fr-mr-top{font-family:var(--font-m);font-size:12px;font-weight:500;color:var(--text);}
+  .fr-mr-bot{font-family:var(--font-m);font-size:10px;color:var(--muted);margin-top:2px;}
+  .fr-mr-top.pos{color:var(--green);}
+  .fr-mr-top.neg{color:var(--red);}
+  .fr-req-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;box-shadow:var(--shadow);}
+  .fr-req-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .fr-req-btns{display:flex;gap:8px;}
+  .fr-btn-accept{flex:1;padding:11px 0;background:var(--green);color:#fff;border:none;border-radius:8px;font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;}
+  .fr-btn-decline{flex:1;padding:11px 0;background:var(--red);color:#fff;border:none;border-radius:8px;font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;}
+  .fr-empty{font-family:var(--font-m);font-size:11px;color:var(--muted);text-align:center;padding:24px;line-height:1.6;}
+  .fr-profile-hero{text-align:center;padding:20px 16px 16px;border-bottom:1px solid var(--border);}
+  .fr-big-avatar{width:60px;height:60px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:22px;font-weight:500;margin:0 auto 12px;text-transform:uppercase;}
+  .fr-profile-name{font-family:var(--font-d);font-size:22px;font-weight:800;letter-spacing:-0.5px;color:var(--text);line-height:1;}
+  .fr-profile-tag{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--green);margin-top:6px;letter-spacing:-0.3px;}
+  .fr-hidden-note{background:rgba(0,0,0,0.03);padding:14px;border-radius:12px;font-family:var(--font-m);font-size:10px;color:var(--muted);text-align:center;margin:14px 0;line-height:1.6;}
+  .um-badge{background:var(--green);color:#fff;font-family:var(--font-m);font-size:10px;padding:2px 8px;border-radius:10px;margin-left:auto;font-weight:500;}
+  /* Handle setup screen */
+  .hs-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px 24px;background:var(--bg);}
+  .hs-screen.show{display:flex;}
+  .hs-brand{margin-bottom:36px;text-align:center;}
+  .hs-logo{font-family:var(--font-d);font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:8px;}
+  .hs-logo span{color:#1a7a4a;}
+  .hs-brand-sub{font-family:var(--font-m);font-size:12px;color:var(--muted);}
+  .hs-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px 20px;width:100%;max-width:340px;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+  .hs-title{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--text);text-align:center;margin-bottom:6px;}
+  .hs-desc{font-family:var(--font-m);font-size:11px;color:var(--muted);line-height:1.6;text-align:center;margin-bottom:22px;}
+  .hs-fields{display:flex;align-items:flex-end;gap:8px;margin-bottom:8px;}
+  .hs-col{display:flex;flex-direction:column;min-width:0;}
+  .hs-col.name{flex:1;}
+  .hs-col.tag{width:88px;}
+  .hs-mini{font-family:var(--font-m);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;padding-left:2px;}
+  .hs-mini.green{color:var(--green);}
+  .hs-input{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;font-family:var(--font-m);font-size:14px;font-weight:500;color:var(--text);outline:none;width:100%;box-sizing:border-box;-webkit-appearance:none;}
+  .hs-input:focus{border-color:var(--text);}
+  .hs-input.tag{text-align:center;color:var(--green);text-transform:uppercase;}
+  .hs-hash{color:var(--muted);font-family:var(--font-m);font-size:20px;font-weight:500;user-select:none;flex-shrink:0;padding:0 2px 12px;align-self:flex-end;}
+  .hs-hint{font-family:var(--font-m);font-size:10px;color:var(--muted);line-height:1.6;margin-bottom:20px;}
+  .hs-preview{background:var(--bg);border-radius:10px;padding:14px;margin-bottom:20px;text-align:center;}
+  .hs-p-label{font-family:var(--font-m);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+  .hs-p-handle{font-family:var(--font-d);font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.4px;line-height:1.1;}
+  .hs-p-handle .tag{color:var(--green);}
+  .hs-save{width:100%;padding:16px;background:var(--acc-bg);color:var(--acc-txt);border:none;border-radius:12px;font-family:var(--font-d);font-size:16px;font-weight:800;cursor:pointer;}
+  .hs-save:disabled{opacity:.4;cursor:not-allowed;}
+  .hs-error{font-family:var(--font-m);font-size:10px;color:var(--red);margin-top:10px;line-height:1.5;text-align:center;min-height:14px;}
+  .hs-footer{font-family:var(--font-m);font-size:10px;color:var(--muted);margin-top:16px;line-height:1.6;text-align:center;}
+  /* Add friend overlay */
+  .af-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:flex-end;justify-content:center;}
+  .af-overlay.show{display:flex;}
+  .af-sheet{background:#fff;border-radius:16px 16px 0 0;padding:20px 18px 28px;width:100%;max-width:500px;box-sizing:border-box;}
+  .af-title{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;}
+  .af-sub{font-family:var(--font-m);font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+  .af-your{background:var(--bg);border-radius:10px;padding:11px 14px;margin-top:14px;display:flex;align-items:center;justify-content:space-between;}
+  .af-your-l{font-family:var(--font-m);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
+  .af-your-r{font-family:var(--font-m);font-size:12px;font-weight:500;color:var(--text);}
+  .af-your-r .tag{color:var(--green);}
 </style>
 </head>
 <body>
@@ -236,6 +309,106 @@
   <div class="loading-txt" id="loading-txt">Loading...</div>
 </div>
 
+<!-- Handle setup screen (shown after first login when no profile exists) -->
+<div id="handle-setup-screen" class="hs-screen">
+  <div class="hs-brand">
+    <div class="hs-logo">POKER<span>LOG</span></div>
+    <div class="hs-brand-sub">All-time tracker</div>
+  </div>
+  <div class="hs-card">
+    <div class="hs-title">Choose your handle</div>
+    <div class="hs-desc">This is how friends will find and add you.</div>
+    <div class="hs-fields">
+      <div class="hs-col name">
+        <div class="hs-mini">Your name</div>
+        <input type="text" id="hs-name" class="hs-input" maxlength="20" placeholder="Your name" oninput="hsUpdatePreview()"/>
+      </div>
+      <div class="hs-hash">#</div>
+      <div class="hs-col tag">
+        <div class="hs-mini green">Your tag</div>
+        <input type="text" id="hs-tag" class="hs-input tag" maxlength="4" placeholder="TAG" oninput="hsUpdatePreview()"/>
+      </div>
+    </div>
+    <div class="hs-hint">Tag: up to 4 letters or numbers, no symbols.</div>
+    <div class="hs-preview">
+      <div class="hs-p-label">Preview</div>
+      <div class="hs-p-handle" id="hs-preview">— <span class="tag">#—</span></div>
+    </div>
+    <button id="hs-save" class="hs-save" onclick="saveHandle()" disabled>Save Handle</button>
+    <div class="hs-error" id="hs-error"></div>
+    <div class="hs-footer">You can change your handle once every 7 days.</div>
+  </div>
+</div>
+
+<!-- Friends list screen -->
+<div id="friends-screen" class="fr-screen">
+  <div class="fr-hdr">
+    <div class="fr-hdr-l">
+      <button class="fr-back" onclick="closeFriends()">‹</button>
+      <div class="fr-title">Friends</div>
+    </div>
+    <div class="fr-sub" id="fr-sub"></div>
+  </div>
+  <div class="fr-content">
+    <div class="fr-row-add">
+      <span class="fr-count">Your friends</span>
+      <button class="fr-add-btn" onclick="openAddFriend()">+ Add friend</button>
+    </div>
+    <div id="fr-list"></div>
+    <div id="fr-pending-section" style="display:none;">
+      <div class="fr-count">Pending requests</div>
+      <div id="fr-pending"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Friend profile screen -->
+<div id="friend-profile-screen" class="fr-screen">
+  <div class="fr-hdr">
+    <div class="fr-hdr-l">
+      <button class="fr-back" onclick="closeFriendProfile()">‹</button>
+      <div class="fr-title" id="fp-title">Friend</div>
+    </div>
+    <div class="fr-sub">friend</div>
+  </div>
+  <div class="fr-content">
+    <div class="fr-profile-hero">
+      <div class="fr-big-avatar" id="fp-avatar">?</div>
+      <div class="fr-profile-name" id="fp-name"></div>
+      <div class="fr-profile-tag" id="fp-tag"></div>
+    </div>
+    <div class="metrics" id="fp-metrics" style="margin-top:16px;">
+      <div class="metric full"><div class="m-label">Loading</div><div class="m-val">…</div></div>
+    </div>
+    <div class="fr-hidden-note">Session notes and individual amounts are private. Only aggregate stats are shared.</div>
+  </div>
+</div>
+
+<!-- Add friend bottom sheet overlay -->
+<div id="add-friend-overlay" class="af-overlay" onclick="if(event.target===this)closeAddFriend()">
+  <div class="af-sheet">
+    <div class="af-title">Add a friend</div>
+    <div class="af-sub">Enter their name and tag.</div>
+    <div class="hs-mini">Their handle</div>
+    <div class="hs-fields" style="margin-top:2px;">
+      <div class="hs-col name">
+        <input type="text" id="af-name" class="hs-input" maxlength="20" placeholder="Name"/>
+      </div>
+      <div class="hs-hash">#</div>
+      <div class="hs-col tag">
+        <input type="text" id="af-tag" class="hs-input tag" maxlength="4" placeholder="TAG"/>
+      </div>
+    </div>
+    <div class="hs-hint">Tag: up to 4 letters or numbers, no symbols.</div>
+    <button class="hs-save" onclick="sendFriendRequest()">Send Request</button>
+    <div class="hs-error" id="af-error"></div>
+    <div class="af-your">
+      <span class="af-your-l">Your handle</span>
+      <span class="af-your-r" id="af-your-handle">—</span>
+    </div>
+  </div>
+</div>
+
 <div id="app" style="display:none;">
   <div class="sticky-top">
   <div class="header">
@@ -251,6 +424,11 @@
         </div>
         <div class="user-menu" id="user-menu">
           <div class="um-email" id="user-email-display"></div>
+          <div class="um-item" id="um-friends" onclick="openFriends()" style="display:none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Friends</span>
+            <span class="um-badge" id="um-friends-badge" style="display:none;">0</span>
+          </div>
           <div id="um-other-accounts"></div>
           <div class="um-item" onclick="addAccount()" style="border-top:1px solid var(--border);margin-top:4px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
@@ -589,7 +767,18 @@ async function initApp(user, token){
   fetchUSDRate();
   await loadSessions();
   await seedIfEmpty();
-  showScreen('app');renderDashboard();updateCurrencyButtons();
+  await loadMyProfile();
+  if(needsHandleSetup()){ showHandleSetup(); return; }
+  enterApp();
+}
+function enterApp(){
+  showScreen('app');
+  renderDashboard();
+  updateCurrencyButtons();
+  updateFriendsMenuVisibility();
+  if(profilesTableExists && myProfile){
+    loadFriendsData().then(function(){ /* just cache badge count */ }).catch(function(){});
+  }
 }
 
 async function boot(){
@@ -1043,6 +1232,315 @@ async function confirmImport() {
   btn.disabled = false; btn.textContent = 'Import all';
   alert('Successfully imported ' + rows.length + ' sessions!');
   switchPage('history');
+}
+
+// ── FRIENDS FEATURE ────────────────────────────────────────────────────────
+let myProfile = null;
+let profilesTableExists = null;
+let friendsCache = { accepted: [], incoming: [] };
+
+function escapeHtml(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]; }); }
+
+function avatarColor(email){
+  const colors = ['#00995e','#d63030','#e5b83a','#3878e0','#a04ec9','#e0742f','#6d6d6d'];
+  let h = 0; for(let i=0;i<email.length;i++) h = (h*31 + email.charCodeAt(i)) & 0xffffffff;
+  return colors[Math.abs(h) % colors.length];
+}
+
+function fmtHandle(name, tag){
+  return escapeHtml(name) + ' <span class="fr-tag">#' + escapeHtml(String(tag).toUpperCase()) + '</span>';
+}
+
+async function loadMyProfile(){
+  try {
+    const res = await sbFetch('/rest/v1/profiles?user_email=eq.' + encodeURIComponent(currentUser.email) + '&select=*');
+    if(!res.ok){ profilesTableExists = false; myProfile = null; return; }
+    profilesTableExists = true;
+    const data = await res.json();
+    myProfile = data.length ? data[0] : null;
+  } catch(e){ profilesTableExists = false; myProfile = null; }
+}
+
+function needsHandleSetup(){ return profilesTableExists === true && !myProfile; }
+
+function updateFriendsMenuVisibility(){
+  const el = document.getElementById('um-friends');
+  if(el) el.style.display = (profilesTableExists && myProfile) ? 'flex' : 'none';
+}
+function updateFriendsBadge(count){
+  const badge = document.getElementById('um-friends-badge');
+  if(!badge) return;
+  if(count > 0){ badge.textContent = String(count); badge.style.display = 'inline-block'; }
+  else badge.style.display = 'none';
+}
+
+// Handle setup screen
+function showHandleSetup(){
+  document.getElementById('handle-setup-screen').classList.add('show');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('hs-name').value = '';
+  document.getElementById('hs-tag').value = '';
+  document.getElementById('hs-error').textContent = '';
+  hsUpdatePreview();
+}
+function hideHandleSetup(){ document.getElementById('handle-setup-screen').classList.remove('show'); }
+
+function hsUpdatePreview(){
+  const n = (document.getElementById('hs-name').value || '').trim();
+  const t = (document.getElementById('hs-tag').value || '').trim();
+  const nameDisplay = n || '—';
+  const tagDisplay = t ? '#' + t.toUpperCase() : '#—';
+  document.getElementById('hs-preview').innerHTML = escapeHtml(nameDisplay) + ' <span class="tag">' + escapeHtml(tagDisplay) + '</span>';
+  const validName = n.length >= 1 && n.length <= 20;
+  const validTag = /^[A-Za-z0-9]{1,4}$/.test(t);
+  document.getElementById('hs-save').disabled = !(validName && validTag);
+}
+
+async function saveHandle(){
+  const btn = document.getElementById('hs-save');
+  const err = document.getElementById('hs-error');
+  err.textContent = '';
+  const n = document.getElementById('hs-name').value.trim();
+  const t = document.getElementById('hs-tag').value.trim();
+  if(!n || !/^[A-Za-z0-9]{1,4}$/.test(t)){ err.textContent = 'Fix the fields above.'; return; }
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    const payload = { user_email: currentUser.email, display_name: n, tag: t };
+    const res = await sbFetch('/rest/v1/profiles', { method:'POST', body: JSON.stringify(payload), extraHeaders:{ 'Prefer':'return=representation' } });
+    if(!res.ok){
+      const body = await res.text();
+      if(body.indexOf('profiles_handle_unique') >= 0 || body.indexOf('duplicate key') >= 0) err.textContent = 'That handle is taken. Try another.';
+      else if(body.indexOf('profiles_tag_format') >= 0) err.textContent = 'Tag: 1-4 letters/numbers only.';
+      else if(body.indexOf('profiles_name_length') >= 0) err.textContent = 'Name: 1-20 characters.';
+      else err.textContent = 'Could not save: ' + body.slice(0,120);
+      btn.disabled = false; btn.textContent = 'Save Handle';
+      return;
+    }
+    const data = await res.json();
+    myProfile = data[0];
+    hideHandleSetup();
+    enterApp();
+  } catch(e){
+    err.textContent = 'Network error: ' + e.message;
+    btn.disabled = false; btn.textContent = 'Save Handle';
+  }
+}
+
+// Friends list
+async function openFriends(){
+  toggleUserMenu();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('friends-screen').classList.add('show');
+  document.getElementById('fr-list').innerHTML = '<div class="fr-empty">Loading...</div>';
+  document.getElementById('fr-pending-section').style.display = 'none';
+  document.getElementById('fr-sub').textContent = '';
+  await loadFriendsData();
+  renderFriends();
+}
+function closeFriends(){
+  document.getElementById('friends-screen').classList.remove('show');
+  document.getElementById('app').style.display = 'block';
+}
+
+async function loadFriendsData(){
+  friendsCache = { accepted: [], incoming: [] };
+  if(!currentUser || !profilesTableExists) return;
+  try {
+    const myEmail = encodeURIComponent(currentUser.email);
+    const res = await sbFetch('/rest/v1/friendships?or=(user_email.eq.' + myEmail + ',friend_email.eq.' + myEmail + ')&select=*');
+    if(!res.ok) return;
+    const rows = await res.json();
+    const acceptedEmails = [];
+    const incomingRequests = [];
+    for(const r of rows){
+      const other = r.user_email === currentUser.email ? r.friend_email : r.user_email;
+      if(r.status === 'accepted') acceptedEmails.push({ email: other, row: r });
+      else if(r.status === 'pending' && r.friend_email === currentUser.email) incomingRequests.push({ email: other, row: r });
+    }
+    const allEmails = [].concat(acceptedEmails.map(x=>x.email), incomingRequests.map(x=>x.email));
+    const profiles = {};
+    if(allEmails.length){
+      const inList = allEmails.map(e => '"' + e.replace(/"/g,'\\"') + '"').join(',');
+      const pRes = await sbFetch('/rest/v1/profiles?user_email=in.(' + encodeURIComponent(inList) + ')&select=user_email,display_name,tag');
+      if(pRes.ok){
+        const pData = await pRes.json();
+        pData.forEach(p => { profiles[p.user_email] = p; });
+      }
+    }
+    const stats = {};
+    for(const f of acceptedEmails){
+      try {
+        const sRes = await sbFetch('/rest/v1/sessions?user_email=eq.' + encodeURIComponent(f.email) + '&select=amount');
+        if(sRes.ok){
+          const rows = await sRes.json();
+          const total = rows.reduce((a,r)=>a+r.amount, 0);
+          const wins = rows.filter(r=>r.amount >= 0).length;
+          const wr = rows.length ? (wins/rows.length*100) : 0;
+          stats[f.email] = { total, count: rows.length, wr };
+        }
+      } catch(e){}
+    }
+    friendsCache.accepted = acceptedEmails.map(f => ({ email:f.email, row:f.row, profile:profiles[f.email]||null, stats:stats[f.email]||null }));
+    friendsCache.incoming = incomingRequests.map(f => ({ email:f.email, row:f.row, profile:profiles[f.email]||null }));
+  } catch(e){ console.warn('loadFriendsData', e); }
+  updateFriendsBadge(friendsCache.incoming.length);
+}
+
+function renderFriends(){
+  const list = document.getElementById('fr-list');
+  const pendingSection = document.getElementById('fr-pending-section');
+  const pendingList = document.getElementById('fr-pending');
+  const sub = document.getElementById('fr-sub');
+  const nA = friendsCache.accepted.length;
+  const nR = friendsCache.incoming.length;
+  sub.textContent = nA + ' friend' + (nA===1?'':'s') + (nR ? ' · ' + nR + ' request' + (nR===1?'':'s') : '');
+  if(nA === 0){
+    list.innerHTML = '<div class="fr-empty">No friends yet. Add one with their handle.</div>';
+  } else {
+    list.innerHTML = friendsCache.accepted.map(function(f){
+      const p = f.profile;
+      const name = p ? p.display_name : f.email.split('@')[0];
+      const tag = p ? p.tag : '?';
+      const initial = (name.charAt(0) || '?').toUpperCase();
+      let statsHtml = '';
+      if(f.stats){
+        const cls = f.stats.total >= 0 ? 'pos' : 'neg';
+        const amt = (f.stats.total >= 0 ? '+' : '') + idr(f.stats.total, false);
+        statsHtml = '<div class="fr-mr"><div class="fr-mr-top ' + cls + '">' + amt + '</div><div class="fr-mr-bot">' + f.stats.wr.toFixed(2) + ' % wr</div></div>';
+      }
+      return '<div class="fr-card" onclick="openFriendProfile(\'' + encodeURIComponent(f.email) + '\',\'' + encodeURIComponent(name) + '\',\'' + encodeURIComponent(tag) + '\')">' +
+        '<div class="fr-card-l"><div class="fr-avatar" style="background:' + avatarColor(f.email) + ';">' + escapeHtml(initial) + '</div>' +
+        '<div class="fr-handle">' + fmtHandle(name, tag) + '</div></div>' + statsHtml + '</div>';
+    }).join('');
+  }
+  if(nR === 0){
+    pendingSection.style.display = 'none';
+  } else {
+    pendingSection.style.display = 'block';
+    pendingList.innerHTML = friendsCache.incoming.map(function(f){
+      const p = f.profile;
+      const name = p ? p.display_name : f.email.split('@')[0];
+      const tag = p ? p.tag : '?';
+      const initial = (name.charAt(0) || '?').toUpperCase();
+      return '<div class="fr-req-card"><div class="fr-req-top"><div class="fr-avatar" style="background:' + avatarColor(f.email) + ';">' + escapeHtml(initial) + '</div>' +
+        '<div class="fr-handle">' + fmtHandle(name, tag) + '</div></div>' +
+        '<div class="fr-req-btns">' +
+        '<button class="fr-btn-accept" onclick="acceptRequest(\'' + f.row.id + '\')">Accept</button>' +
+        '<button class="fr-btn-decline" onclick="declineRequest(\'' + f.row.id + '\')">Decline</button>' +
+        '</div></div>';
+    }).join('');
+  }
+}
+
+// Add friend
+function openAddFriend(){
+  document.getElementById('af-name').value = '';
+  document.getElementById('af-tag').value = '';
+  document.getElementById('af-error').textContent = '';
+  if(myProfile){
+    document.getElementById('af-your-handle').innerHTML = escapeHtml(myProfile.display_name) + ' <span class="tag">#' + escapeHtml(myProfile.tag) + '</span>';
+  }
+  document.getElementById('add-friend-overlay').classList.add('show');
+}
+function closeAddFriend(){ document.getElementById('add-friend-overlay').classList.remove('show'); }
+
+async function sendFriendRequest(){
+  const err = document.getElementById('af-error');
+  err.textContent = '';
+  const name = document.getElementById('af-name').value.trim();
+  const tag = document.getElementById('af-tag').value.trim();
+  if(!name || !/^[A-Za-z0-9]{1,4}$/.test(tag)){ err.textContent = 'Enter a name and a 1-4 char tag.'; return; }
+  try {
+    const pRes = await sbFetch('/rest/v1/profiles?display_name=ilike.' + encodeURIComponent(name) + '&tag=ilike.' + encodeURIComponent(tag) + '&select=user_email');
+    if(!pRes.ok){ err.textContent = 'Lookup failed.'; return; }
+    const matches = await pRes.json();
+    if(matches.length === 0){ err.textContent = 'No user found with that handle.'; return; }
+    const target = matches[0].user_email;
+    if(target === currentUser.email){ err.textContent = "That's you."; return; }
+    const res = await sbFetch('/rest/v1/friendships', {
+      method: 'POST',
+      body: JSON.stringify({ user_email: currentUser.email, friend_email: target, status: 'pending' }),
+      extraHeaders: { 'Prefer': 'return=minimal' }
+    });
+    if(!res.ok){
+      const body = await res.text();
+      if(body.indexOf('duplicate key') >= 0 || body.indexOf('friendships_user_email_friend_email_key') >= 0) err.textContent = 'Request already exists.';
+      else err.textContent = 'Send failed: ' + body.slice(0,120);
+      return;
+    }
+    closeAddFriend();
+    await loadFriendsData();
+    renderFriends();
+  } catch(e){ err.textContent = 'Network error.'; }
+}
+
+async function acceptRequest(id){
+  try {
+    const res = await sbFetch('/rest/v1/friendships?id=eq.' + id, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'accepted' }),
+      extraHeaders: { 'Prefer': 'return=minimal' }
+    });
+    if(res.ok){ await loadFriendsData(); renderFriends(); }
+  } catch(e){}
+}
+async function declineRequest(id){
+  try {
+    const res = await sbFetch('/rest/v1/friendships?id=eq.' + id, { method: 'DELETE' });
+    if(res.ok){ await loadFriendsData(); renderFriends(); }
+  } catch(e){}
+}
+
+// Friend profile
+async function openFriendProfile(emailEnc, nameEnc, tagEnc){
+  const email = decodeURIComponent(emailEnc);
+  const name = decodeURIComponent(nameEnc);
+  const tag = decodeURIComponent(tagEnc);
+  document.getElementById('friends-screen').classList.remove('show');
+  document.getElementById('friend-profile-screen').classList.add('show');
+  document.getElementById('fp-title').textContent = name;
+  document.getElementById('fp-name').textContent = name;
+  document.getElementById('fp-tag').textContent = '#' + tag.toUpperCase();
+  const initial = (name.charAt(0) || '?').toUpperCase();
+  const av = document.getElementById('fp-avatar');
+  av.textContent = initial;
+  av.style.background = avatarColor(email);
+  const metrics = document.getElementById('fp-metrics');
+  metrics.innerHTML = '<div class="metric full"><div class="m-label">Loading</div><div class="m-val">…</div></div>';
+  try {
+    const res = await sbFetch('/rest/v1/sessions?user_email=eq.' + encodeURIComponent(email) + '&select=amount,date');
+    if(!res.ok){ metrics.innerHTML = '<div class="metric full"><div class="m-label">Error</div><div class="m-val">Could not load stats</div></div>'; return; }
+    const rows = await res.json();
+    if(rows.length === 0){
+      metrics.innerHTML = '<div class="metric full"><div class="m-label">Sessions</div><div class="m-val">No sessions yet</div></div>';
+      return;
+    }
+    const total = rows.reduce((a,r)=>a+r.amount, 0);
+    const wins = rows.filter(r=>r.amount >= 0).length;
+    const losses = rows.length - wins;
+    const wr = (wins/rows.length*100).toFixed(2);
+    const biggest = rows.reduce((m,r)=>r.amount>m?r.amount:m, rows[0].amount);
+    const sorted = rows.slice().sort((a,b)=>b.date.localeCompare(a.date));
+    let streak = 0;
+    for(const r of sorted){ if(r.amount >= 0) streak++; else break; }
+    const totalCls = total >= 0 ? 'pos' : 'neg';
+    const totalStr = (total >= 0 ? '+' : '') + idr(total, false);
+    const biggestStr = (biggest >= 0 ? '+' : '') + idr(biggest, false);
+    metrics.innerHTML =
+      '<div class="metric full"><div class="m-label">Total Profit</div><div class="m-val ' + totalCls + '">' + totalStr + '</div></div>' +
+      '<div class="metric"><div class="m-label">Win Rate</div><div class="m-val big ' + (parseFloat(wr)>=50?'pos':'') + '">' + wr + '%</div></div>' +
+      '<div class="metric"><div class="m-label">Sessions</div><div class="m-val big">' + rows.length + '</div><div class="m-sub">' + wins + 'W · ' + losses + 'L</div></div>' +
+      '<div class="metric"><div class="m-label">Biggest Win</div><div class="m-val pos">' + biggestStr + '</div></div>' +
+      '<div class="metric"><div class="m-label">Win Streak</div><div class="m-val">' + streak + ' session' + (streak===1?'':'s') + '</div></div>';
+  } catch(e){
+    metrics.innerHTML = '<div class="metric full"><div class="m-label">Error</div><div class="m-val">Network error</div></div>';
+  }
+}
+function closeFriendProfile(){
+  document.getElementById('friend-profile-screen').classList.remove('show');
+  document.getElementById('friends-screen').classList.add('show');
 }
 
 boot();
