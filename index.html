@@ -641,7 +641,7 @@ async function sbFetch(path, opts){
 }
 
 async function loadSessions(){
-  const res = await sbFetch('/rest/v1/sessions?select=id,date,amount,note&order=date.desc');
+  const res = await sbFetch('/rest/v1/sessions?user_email=eq.' + encodeURIComponent(currentUser.email) + '&select=id,date,amount,note&order=date.desc');
   if(!res.ok){console.error('loadSessions',res.status,await res.text());return;}
   const data = await res.json();
   sessions = data.map(function(r){return{id:r.id,date:r.date,amount:r.amount,note:r.note||''};});
@@ -649,7 +649,7 @@ async function loadSessions(){
 
 async function seedIfEmpty(){
   if(currentUser.email!=='jlseagull715@gmail.com')return;
-  const res = await sbFetch('/rest/v1/sessions?select=id&limit=1');
+  const res = await sbFetch('/rest/v1/sessions?user_email=eq.' + encodeURIComponent(currentUser.email) + '&select=id&limit=1');
   if(!res.ok)return;
   const data = await res.json();
   if(data.length>0)return;
