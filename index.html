@@ -1463,13 +1463,20 @@ async function loadFriendsData(){
     const stats = {};
     for(const f of acceptedEmails){
       try {
-        const sRes = await sbFetch('/rest/v1/sessions?user_email=eq.' + encodeURIComponent(f.email) + '&select=amount');
+        const sRes = await sbFetch('/rest/v1/rpc/get_friend_stats', {
+          method: 'POST',
+          body: JSON.stringify({ target_email: f.email })
+        });
         if(sRes.ok){
           const rows = await sRes.json();
-          const total = rows.reduce((a,r)=>a+r.amount, 0);
-          const wins = rows.filter(r=>r.amount >= 0).length;
-          const wr = rows.length ? (wins/rows.length*100) : 0;
-          stats[f.email] = { total, count: rows.length, wr };
+          const s = Array.isArray(rows) ? rows[0] : rows;
+          if(s){
+            stats[f.email] = {
+              total: parseInt(s.total_profit) || 0,
+              count: s.session_count || 0,
+              wr: parseFloat(s.win_rate) || 0
+            };
+          }
         }
       } catch(e){}
     }
@@ -1636,28 +1643,31 @@ async function openFriendProfile(emailEnc, nameEnc, tagEnc, avatarEnc){
   const metrics = document.getElementById('fp-metrics');
   metrics.innerHTML = '<div class="metric full"><div class="m-label">Loading</div><div class="m-val">…</div></div>';
   try {
-    const res = await sbFetch('/rest/v1/sessions?user_email=eq.' + encodeURIComponent(email) + '&select=amount,date');
+    const res = await sbFetch('/rest/v1/rpc/get_friend_stats', {
+      method: 'POST',
+      body: JSON.stringify({ target_email: email })
+    });
     if(!res.ok){ metrics.innerHTML = '<div class="metric full"><div class="m-label">Error</div><div class="m-val">Could not load stats</div></div>'; return; }
     const rows = await res.json();
-    if(rows.length === 0){
+    const s = Array.isArray(rows) ? rows[0] : rows;
+    if(!s || (s.session_count||0) === 0){
       metrics.innerHTML = '<div class="metric full"><div class="m-label">Sessions</div><div class="m-val">No sessions yet</div></div>';
       return;
     }
-    const total = rows.reduce((a,r)=>a+r.amount, 0);
-    const wins = rows.filter(r=>r.amount >= 0).length;
-    const losses = rows.length - wins;
-    const wr = (wins/rows.length*100).toFixed(2);
-    const biggest = rows.reduce((m,r)=>r.amount>m?r.amount:m, rows[0].amount);
-    const sorted = rows.slice().sort((a,b)=>b.date.localeCompare(a.date));
-    let streak = 0;
-    for(const r of sorted){ if(r.amount >= 0) streak++; else break; }
+    const total = parseInt(s.total_profit) || 0;
+    const wins = s.wins || 0;
+    const losses = s.losses || 0;
+    const count = s.session_count || 0;
+    const wr = parseFloat(s.win_rate).toFixed(2);
+    const biggest = s.biggest_win || 0;
+    const streak = s.win_streak || 0;
     const totalCls = total >= 0 ? 'pos' : 'neg';
     const totalStr = idr(total, false);
     const biggestStr = idr(biggest, false);
     metrics.innerHTML =
       '<div class="metric full"><div class="m-label">Total Profit</div><div class="m-val ' + totalCls + '">' + totalStr + '</div></div>' +
       '<div class="metric"><div class="m-label">Win Rate</div><div class="m-val big ' + (parseFloat(wr)>=50?'pos':'') + '">' + wr + '%</div></div>' +
-      '<div class="metric"><div class="m-label">Sessions</div><div class="m-val big">' + rows.length + '</div><div class="m-sub">' + wins + 'W · ' + losses + 'L</div></div>' +
+      '<div class="metric"><div class="m-label">Sessions</div><div class="m-val big">' + count + '</div><div class="m-sub">' + wins + 'W · ' + losses + 'L</div></div>' +
       '<div class="metric"><div class="m-label">Biggest Win</div><div class="m-val pos">' + biggestStr + '</div></div>' +
       '<div class="metric"><div class="m-label">Win Streak</div><div class="m-val">' + streak + ' session' + (streak===1?'':'s') + '</div></div>';
   } catch(e){
