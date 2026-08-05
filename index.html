@@ -321,7 +321,7 @@
     <div class="hs-fields">
       <div class="hs-col name">
         <div class="hs-mini">Your name</div>
-        <input type="text" id="hs-name" class="hs-input" maxlength="20" placeholder="Your name" oninput="hsUpdatePreview()"/>
+        <input type="text" id="hs-name" class="hs-input" maxlength="10" placeholder="Your name" oninput="hsUpdatePreview()"/>
       </div>
       <div class="hs-hash">#</div>
       <div class="hs-col tag">
@@ -336,7 +336,10 @@
     </div>
     <button id="hs-save" class="hs-save" onclick="saveHandle()" disabled>Save Handle</button>
     <div class="hs-error" id="hs-error"></div>
-    <div class="hs-footer">You can change your handle once every 7 days.</div>
+    <div class="hs-footer" id="hs-footer">You can change your handle once every 7 days.</div>
+    <div id="hs-cancel-wrap" style="display:none;text-align:center;margin-top:10px;">
+      <button onclick="cancelChangeHandle()" style="background:none;border:none;color:var(--muted);font-family:var(--font-m);font-size:11px;cursor:pointer;padding:6px 12px;">Cancel</button>
+    </div>
   </div>
 </div>
 
@@ -392,7 +395,7 @@
     <div class="hs-mini">Their handle</div>
     <div class="hs-fields" style="margin-top:2px;">
       <div class="hs-col name">
-        <input type="text" id="af-name" class="hs-input" maxlength="20" placeholder="Name"/>
+        <input type="text" id="af-name" class="hs-input" maxlength="10" placeholder="Name"/>
       </div>
       <div class="hs-hash">#</div>
       <div class="hs-col tag">
@@ -428,6 +431,10 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             <span>Friends</span>
             <span class="um-badge" id="um-friends-badge" style="display:none;">0</span>
+          </div>
+          <div class="um-item" id="um-change-handle" onclick="openChangeHandle()" style="display:none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span>Change handle</span>
           </div>
           <div id="um-other-accounts"></div>
           <div class="um-item" onclick="addAccount()" style="border-top:1px solid var(--border);margin-top:4px;">
@@ -1263,9 +1270,14 @@ async function loadMyProfile(){
 
 function needsHandleSetup(){ return profilesTableExists === true && !myProfile; }
 
+let hsEditMode = false;
+
 function updateFriendsMenuVisibility(){
-  const el = document.getElementById('um-friends');
-  if(el) el.style.display = (profilesTableExists && myProfile) ? 'flex' : 'none';
+  const canFriend = !!(profilesTableExists && myProfile);
+  const fr = document.getElementById('um-friends');
+  const ch = document.getElementById('um-change-handle');
+  if(fr) fr.style.display = canFriend ? 'flex' : 'none';
+  if(ch) ch.style.display = canFriend ? 'flex' : 'none';
 }
 function updateFriendsBadge(count){
   const badge = document.getElementById('um-friends-badge');
@@ -1276,6 +1288,7 @@ function updateFriendsBadge(count){
 
 // Handle setup screen
 function showHandleSetup(){
+  hsEditMode = false;
   document.getElementById('handle-setup-screen').classList.add('show');
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'none';
@@ -1283,7 +1296,27 @@ function showHandleSetup(){
   document.getElementById('hs-name').value = '';
   document.getElementById('hs-tag').value = '';
   document.getElementById('hs-error').textContent = '';
+  document.getElementById('hs-cancel-wrap').style.display = 'none';
+  document.getElementById('hs-save').textContent = 'Save Handle';
   hsUpdatePreview();
+}
+function openChangeHandle(){
+  if(!myProfile) return;
+  toggleUserMenu();
+  hsEditMode = true;
+  document.getElementById('handle-setup-screen').classList.add('show');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('hs-name').value = myProfile.display_name;
+  document.getElementById('hs-tag').value = myProfile.tag;
+  document.getElementById('hs-error').textContent = '';
+  document.getElementById('hs-cancel-wrap').style.display = 'block';
+  document.getElementById('hs-save').textContent = 'Save Changes';
+  hsUpdatePreview();
+}
+function cancelChangeHandle(){
+  document.getElementById('handle-setup-screen').classList.remove('show');
+  document.getElementById('app').style.display = 'block';
+  hsEditMode = false;
 }
 function hideHandleSetup(){ document.getElementById('handle-setup-screen').classList.remove('show'); }
 
@@ -1293,7 +1326,7 @@ function hsUpdatePreview(){
   const nameDisplay = n || '—';
   const tagDisplay = t ? '#' + t.toUpperCase() : '#—';
   document.getElementById('hs-preview').innerHTML = escapeHtml(nameDisplay) + ' <span class="tag">' + escapeHtml(tagDisplay) + '</span>';
-  const validName = n.length >= 1 && n.length <= 20;
+  const validName = n.length >= 1 && n.length <= 10;
   const validTag = /^[A-Za-z0-9]{1,4}$/.test(t);
   document.getElementById('hs-save').disabled = !(validName && validTag);
 }
@@ -1301,30 +1334,52 @@ function hsUpdatePreview(){
 async function saveHandle(){
   const btn = document.getElementById('hs-save');
   const err = document.getElementById('hs-error');
+  const originalLabel = btn.textContent;
   err.textContent = '';
   const n = document.getElementById('hs-name').value.trim();
   const t = document.getElementById('hs-tag').value.trim();
-  if(!n || !/^[A-Za-z0-9]{1,4}$/.test(t)){ err.textContent = 'Fix the fields above.'; return; }
+  if(!n || n.length > 10 || !/^[A-Za-z0-9]{1,4}$/.test(t)){ err.textContent = 'Fix the fields above.'; return; }
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
-    const payload = { user_email: currentUser.email, display_name: n, tag: t };
-    const res = await sbFetch('/rest/v1/profiles', { method:'POST', body: JSON.stringify(payload), extraHeaders:{ 'Prefer':'return=representation' } });
+    let res;
+    if(hsEditMode){
+      // Update existing profile
+      res = await sbFetch('/rest/v1/profiles?user_email=eq.' + encodeURIComponent(currentUser.email), {
+        method: 'PATCH',
+        body: JSON.stringify({ display_name: n, tag: t }),
+        extraHeaders: { 'Prefer': 'return=representation' }
+      });
+    } else {
+      // Create new profile
+      res = await sbFetch('/rest/v1/profiles', {
+        method: 'POST',
+        body: JSON.stringify({ user_email: currentUser.email, display_name: n, tag: t }),
+        extraHeaders: { 'Prefer': 'return=representation' }
+      });
+    }
     if(!res.ok){
       const body = await res.text();
-      if(body.indexOf('profiles_handle_unique') >= 0 || body.indexOf('duplicate key') >= 0) err.textContent = 'That handle is taken. Try another.';
+      if(body.indexOf('once every 7 days') >= 0) err.textContent = 'You can only change your handle once every 7 days.';
+      else if(body.indexOf('profiles_handle_unique') >= 0 || body.indexOf('duplicate key') >= 0) err.textContent = 'That handle is taken. Try another.';
       else if(body.indexOf('profiles_tag_format') >= 0) err.textContent = 'Tag: 1-4 letters/numbers only.';
-      else if(body.indexOf('profiles_name_length') >= 0) err.textContent = 'Name: 1-20 characters.';
+      else if(body.indexOf('profiles_name_length') >= 0) err.textContent = 'Name: 1-10 characters.';
       else err.textContent = 'Could not save: ' + body.slice(0,120);
-      btn.disabled = false; btn.textContent = 'Save Handle';
+      btn.disabled = false; btn.textContent = originalLabel;
       return;
     }
     const data = await res.json();
     myProfile = data[0];
-    hideHandleSetup();
-    enterApp();
+    if(hsEditMode){
+      cancelChangeHandle();
+      // Update the top-right user chip if needed
+      updateFriendsMenuVisibility();
+    } else {
+      hideHandleSetup();
+      enterApp();
+    }
   } catch(e){
     err.textContent = 'Network error: ' + e.message;
-    btn.disabled = false; btn.textContent = 'Save Handle';
+    btn.disabled = false; btn.textContent = originalLabel;
   }
 }
 
@@ -1407,7 +1462,7 @@ function renderFriends(){
       let statsHtml = '';
       if(f.stats){
         const cls = f.stats.total >= 0 ? 'pos' : 'neg';
-        const amt = (f.stats.total >= 0 ? '+' : '') + idr(f.stats.total, false);
+        const amt = idr(f.stats.total, false);
         statsHtml = '<div class="fr-mr"><div class="fr-mr-top ' + cls + '">' + amt + '</div><div class="fr-mr-bot">' + f.stats.wr.toFixed(2) + ' % wr</div></div>';
       }
       return '<div class="fr-card" onclick="openFriendProfile(\'' + encodeURIComponent(f.email) + '\',\'' + encodeURIComponent(name) + '\',\'' + encodeURIComponent(tag) + '\')">' +
@@ -1526,8 +1581,8 @@ async function openFriendProfile(emailEnc, nameEnc, tagEnc){
     let streak = 0;
     for(const r of sorted){ if(r.amount >= 0) streak++; else break; }
     const totalCls = total >= 0 ? 'pos' : 'neg';
-    const totalStr = (total >= 0 ? '+' : '') + idr(total, false);
-    const biggestStr = (biggest >= 0 ? '+' : '') + idr(biggest, false);
+    const totalStr = idr(total, false);
+    const biggestStr = idr(biggest, false);
     metrics.innerHTML =
       '<div class="metric full"><div class="m-label">Total Profit</div><div class="m-val ' + totalCls + '">' + totalStr + '</div></div>' +
       '<div class="metric"><div class="m-label">Win Rate</div><div class="m-val big ' + (parseFloat(wr)>=50?'pos':'') + '">' + wr + '%</div></div>' +
