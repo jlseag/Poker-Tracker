@@ -192,7 +192,11 @@
   .fr-add-btn{display:flex;gap:6px;align-items:center;padding:8px 14px;background:#fff;color:var(--green);border:1.5px solid var(--green);border-radius:20px;font-family:var(--font-d);font-size:12px;font-weight:600;letter-spacing:.03em;cursor:pointer;}
   .fr-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;box-shadow:var(--shadow);}
   .fr-card-l{display:flex;align-items:center;gap:10px;min-width:0;flex:1;}
-  .fr-avatar{width:36px;height:36px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:13px;font-weight:500;flex-shrink:0;text-transform:uppercase;}
+  .fr-avatar{width:36px;height:36px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:13px;font-weight:500;flex-shrink:0;text-transform:uppercase;overflow:hidden;}
+  .fr-avatar img{width:100%;height:100%;object-fit:cover;}
+  .fr-sent-r{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+  .fr-sent-pill{font-family:var(--font-m);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;background:rgba(0,0,0,0.05);border-radius:12px;}
+  .fr-sent-cancel{font-family:var(--font-m);font-size:10px;color:var(--red);background:none;border:none;padding:2px 4px;cursor:pointer;letter-spacing:.03em;}
   .fr-handle{font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.2px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .fr-handle .fr-tag{color:var(--green);}
   .fr-mr{text-align:right;flex-shrink:0;}
@@ -207,7 +211,8 @@
   .fr-btn-decline{flex:1;padding:11px 0;background:var(--red);color:#fff;border:none;border-radius:8px;font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;}
   .fr-empty{font-family:var(--font-m);font-size:11px;color:var(--muted);text-align:center;padding:24px;line-height:1.6;}
   .fr-profile-hero{text-align:center;padding:20px 16px 16px;border-bottom:1px solid var(--border);}
-  .fr-big-avatar{width:60px;height:60px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:22px;font-weight:500;margin:0 auto 12px;text-transform:uppercase;}
+  .fr-big-avatar{width:60px;height:60px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:22px;font-weight:500;margin:0 auto 12px;text-transform:uppercase;overflow:hidden;}
+  .fr-big-avatar img{width:100%;height:100%;object-fit:cover;}
   .fr-profile-name{font-family:var(--font-d);font-size:22px;font-weight:800;letter-spacing:-0.5px;color:var(--text);line-height:1;}
   .fr-profile-tag{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--green);margin-top:6px;letter-spacing:-0.3px;}
   .fr-hidden-note{background:rgba(0,0,0,0.03);padding:14px;border-radius:12px;font-family:var(--font-m);font-size:10px;color:var(--muted);text-align:center;margin:14px 0;line-height:1.6;}
@@ -361,6 +366,10 @@
     <div id="fr-pending-section" style="display:none;">
       <div class="fr-count">Pending requests</div>
       <div id="fr-pending"></div>
+    </div>
+    <div id="fr-sent-section" style="display:none;">
+      <div class="fr-count">Sent requests</div>
+      <div id="fr-sent"></div>
     </div>
   </div>
 </div>
@@ -1244,7 +1253,15 @@ async function confirmImport() {
 // ── FRIENDS FEATURE ────────────────────────────────────────────────────────
 let myProfile = null;
 let profilesTableExists = null;
-let friendsCache = { accepted: [], incoming: [] };
+let friendsCache = { accepted: [], incoming: [], outgoing: [] };
+
+function renderAvatarHtml(cls, email, name, avatarUrl){
+  const initial = (name.charAt(0) || '?').toUpperCase();
+  if(avatarUrl){
+    return '<div class="' + cls + '" style="background:transparent;"><img src="' + escapeHtml(avatarUrl) + '" alt=""/></div>';
+  }
+  return '<div class="' + cls + '" style="background:' + avatarColor(email) + ';">' + escapeHtml(initial) + '</div>';
+}
 
 function escapeHtml(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]; }); }
 
@@ -1265,6 +1282,20 @@ async function loadMyProfile(){
     profilesTableExists = true;
     const data = await res.json();
     myProfile = data.length ? data[0] : null;
+    // Backfill / refresh Google avatar URL on the profile row (doesn't touch cooldown)
+    if(myProfile){
+      const userAvatarUrl = (currentUser.user_metadata && currentUser.user_metadata.avatar_url) || null;
+      if(userAvatarUrl && myProfile.avatar_url !== userAvatarUrl){
+        try {
+          await sbFetch('/rest/v1/profiles?user_email=eq.' + encodeURIComponent(currentUser.email), {
+            method: 'PATCH',
+            body: JSON.stringify({ avatar_url: userAvatarUrl }),
+            extraHeaders: { 'Prefer': 'return=minimal' }
+          });
+          myProfile.avatar_url = userAvatarUrl;
+        } catch(e){}
+      }
+    }
   } catch(e){ profilesTableExists = false; myProfile = null; }
 }
 
@@ -1340,20 +1371,21 @@ async function saveHandle(){
   const t = document.getElementById('hs-tag').value.trim();
   if(!n || n.length > 10 || !/^[A-Za-z0-9]{1,4}$/.test(t)){ err.textContent = 'Fix the fields above.'; return; }
   btn.disabled = true; btn.textContent = 'Saving...';
+  const avatarUrl = (currentUser.user_metadata && currentUser.user_metadata.avatar_url) || null;
   try {
     let res;
     if(hsEditMode){
-      // Update existing profile
+      // Update existing profile (also refresh avatar_url in case Google pic changed)
       res = await sbFetch('/rest/v1/profiles?user_email=eq.' + encodeURIComponent(currentUser.email), {
         method: 'PATCH',
-        body: JSON.stringify({ display_name: n, tag: t }),
+        body: JSON.stringify({ display_name: n, tag: t, avatar_url: avatarUrl }),
         extraHeaders: { 'Prefer': 'return=representation' }
       });
     } else {
       // Create new profile
       res = await sbFetch('/rest/v1/profiles', {
         method: 'POST',
-        body: JSON.stringify({ user_email: currentUser.email, display_name: n, tag: t }),
+        body: JSON.stringify({ user_email: currentUser.email, display_name: n, tag: t, avatar_url: avatarUrl }),
         extraHeaders: { 'Prefer': 'return=representation' }
       });
     }
@@ -1400,7 +1432,7 @@ function closeFriends(){
 }
 
 async function loadFriendsData(){
-  friendsCache = { accepted: [], incoming: [] };
+  friendsCache = { accepted: [], incoming: [], outgoing: [] };
   if(!currentUser || !profilesTableExists) return;
   try {
     const myEmail = encodeURIComponent(currentUser.email);
@@ -1409,16 +1441,20 @@ async function loadFriendsData(){
     const rows = await res.json();
     const acceptedEmails = [];
     const incomingRequests = [];
+    const outgoingRequests = [];
     for(const r of rows){
       const other = r.user_email === currentUser.email ? r.friend_email : r.user_email;
       if(r.status === 'accepted') acceptedEmails.push({ email: other, row: r });
-      else if(r.status === 'pending' && r.friend_email === currentUser.email) incomingRequests.push({ email: other, row: r });
+      else if(r.status === 'pending'){
+        if(r.friend_email === currentUser.email) incomingRequests.push({ email: other, row: r });
+        else if(r.user_email === currentUser.email) outgoingRequests.push({ email: other, row: r });
+      }
     }
-    const allEmails = [].concat(acceptedEmails.map(x=>x.email), incomingRequests.map(x=>x.email));
+    const allEmails = [].concat(acceptedEmails.map(x=>x.email), incomingRequests.map(x=>x.email), outgoingRequests.map(x=>x.email));
     const profiles = {};
     if(allEmails.length){
       const inList = allEmails.map(e => '"' + e.replace(/"/g,'\\"') + '"').join(',');
-      const pRes = await sbFetch('/rest/v1/profiles?user_email=in.(' + encodeURIComponent(inList) + ')&select=user_email,display_name,tag');
+      const pRes = await sbFetch('/rest/v1/profiles?user_email=in.(' + encodeURIComponent(inList) + ')&select=user_email,display_name,tag,avatar_url');
       if(pRes.ok){
         const pData = await pRes.json();
         pData.forEach(p => { profiles[p.user_email] = p; });
@@ -1439,6 +1475,7 @@ async function loadFriendsData(){
     }
     friendsCache.accepted = acceptedEmails.map(f => ({ email:f.email, row:f.row, profile:profiles[f.email]||null, stats:stats[f.email]||null }));
     friendsCache.incoming = incomingRequests.map(f => ({ email:f.email, row:f.row, profile:profiles[f.email]||null }));
+    friendsCache.outgoing = outgoingRequests.map(f => ({ email:f.email, row:f.row, profile:profiles[f.email]||null }));
   } catch(e){ console.warn('loadFriendsData', e); }
   updateFriendsBadge(friendsCache.incoming.length);
 }
@@ -1447,9 +1484,12 @@ function renderFriends(){
   const list = document.getElementById('fr-list');
   const pendingSection = document.getElementById('fr-pending-section');
   const pendingList = document.getElementById('fr-pending');
+  const sentSection = document.getElementById('fr-sent-section');
+  const sentList = document.getElementById('fr-sent');
   const sub = document.getElementById('fr-sub');
   const nA = friendsCache.accepted.length;
   const nR = friendsCache.incoming.length;
+  const nS = friendsCache.outgoing.length;
   sub.textContent = nA + ' friend' + (nA===1?'':'s') + (nR ? ' · ' + nR + ' request' + (nR===1?'':'s') : '');
   if(nA === 0){
     list.innerHTML = '<div class="fr-empty">No friends yet. Add one with their handle.</div>';
@@ -1458,15 +1498,15 @@ function renderFriends(){
       const p = f.profile;
       const name = p ? p.display_name : f.email.split('@')[0];
       const tag = p ? p.tag : '?';
-      const initial = (name.charAt(0) || '?').toUpperCase();
+      const avatarUrl = p ? p.avatar_url : null;
       let statsHtml = '';
       if(f.stats){
         const cls = f.stats.total >= 0 ? 'pos' : 'neg';
         const amt = idr(f.stats.total, false);
         statsHtml = '<div class="fr-mr"><div class="fr-mr-top ' + cls + '">' + amt + '</div><div class="fr-mr-bot">' + f.stats.wr.toFixed(2) + ' % wr</div></div>';
       }
-      return '<div class="fr-card" onclick="openFriendProfile(\'' + encodeURIComponent(f.email) + '\',\'' + encodeURIComponent(name) + '\',\'' + encodeURIComponent(tag) + '\')">' +
-        '<div class="fr-card-l"><div class="fr-avatar" style="background:' + avatarColor(f.email) + ';">' + escapeHtml(initial) + '</div>' +
+      return '<div class="fr-card" onclick="openFriendProfile(\'' + encodeURIComponent(f.email) + '\',\'' + encodeURIComponent(name) + '\',\'' + encodeURIComponent(tag) + '\',\'' + encodeURIComponent(avatarUrl||'') + '\')">' +
+        '<div class="fr-card-l">' + renderAvatarHtml('fr-avatar', f.email, name, avatarUrl) +
         '<div class="fr-handle">' + fmtHandle(name, tag) + '</div></div>' + statsHtml + '</div>';
     }).join('');
   }
@@ -1478,8 +1518,8 @@ function renderFriends(){
       const p = f.profile;
       const name = p ? p.display_name : f.email.split('@')[0];
       const tag = p ? p.tag : '?';
-      const initial = (name.charAt(0) || '?').toUpperCase();
-      return '<div class="fr-req-card"><div class="fr-req-top"><div class="fr-avatar" style="background:' + avatarColor(f.email) + ';">' + escapeHtml(initial) + '</div>' +
+      const avatarUrl = p ? p.avatar_url : null;
+      return '<div class="fr-req-card"><div class="fr-req-top">' + renderAvatarHtml('fr-avatar', f.email, name, avatarUrl) +
         '<div class="fr-handle">' + fmtHandle(name, tag) + '</div></div>' +
         '<div class="fr-req-btns">' +
         '<button class="fr-btn-accept" onclick="acceptRequest(\'' + f.row.id + '\')">Accept</button>' +
@@ -1487,6 +1527,30 @@ function renderFriends(){
         '</div></div>';
     }).join('');
   }
+  if(nS === 0){
+    sentSection.style.display = 'none';
+  } else {
+    sentSection.style.display = 'block';
+    sentList.innerHTML = friendsCache.outgoing.map(function(f){
+      const p = f.profile;
+      const name = p ? p.display_name : f.email.split('@')[0];
+      const tag = p ? p.tag : '?';
+      const avatarUrl = p ? p.avatar_url : null;
+      return '<div class="fr-card" style="cursor:default;">' +
+        '<div class="fr-card-l">' + renderAvatarHtml('fr-avatar', f.email, name, avatarUrl) +
+        '<div class="fr-handle">' + fmtHandle(name, tag) + '</div></div>' +
+        '<div class="fr-sent-r"><span class="fr-sent-pill">Pending</span>' +
+        '<button class="fr-sent-cancel" onclick="cancelSentRequest(\'' + f.row.id + '\')">Cancel</button></div>' +
+        '</div>';
+    }).join('');
+  }
+}
+
+async function cancelSentRequest(id){
+  try {
+    const res = await sbFetch('/rest/v1/friendships?id=eq.' + id, { method: 'DELETE' });
+    if(res.ok){ await loadFriendsData(); renderFriends(); }
+  } catch(e){}
 }
 
 // Add friend
@@ -1549,10 +1613,11 @@ async function declineRequest(id){
 }
 
 // Friend profile
-async function openFriendProfile(emailEnc, nameEnc, tagEnc){
+async function openFriendProfile(emailEnc, nameEnc, tagEnc, avatarEnc){
   const email = decodeURIComponent(emailEnc);
   const name = decodeURIComponent(nameEnc);
   const tag = decodeURIComponent(tagEnc);
+  const avatarUrl = avatarEnc ? decodeURIComponent(avatarEnc) : '';
   document.getElementById('friends-screen').classList.remove('show');
   document.getElementById('friend-profile-screen').classList.add('show');
   document.getElementById('fp-title').textContent = name;
@@ -1560,8 +1625,14 @@ async function openFriendProfile(emailEnc, nameEnc, tagEnc){
   document.getElementById('fp-tag').textContent = '#' + tag.toUpperCase();
   const initial = (name.charAt(0) || '?').toUpperCase();
   const av = document.getElementById('fp-avatar');
-  av.textContent = initial;
-  av.style.background = avatarColor(email);
+  if(avatarUrl){
+    av.innerHTML = '<img src="' + escapeHtml(avatarUrl) + '" alt=""/>';
+    av.style.background = 'transparent';
+  } else {
+    av.innerHTML = '';
+    av.textContent = initial;
+    av.style.background = avatarColor(email);
+  }
   const metrics = document.getElementById('fp-metrics');
   metrics.innerHTML = '<div class="metric full"><div class="m-label">Loading</div><div class="m-val">…</div></div>';
   try {
